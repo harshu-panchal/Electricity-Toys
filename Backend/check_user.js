@@ -8,15 +8,11 @@ dotenv.config();
 const checkSpecificUser = async () => {
     try {
         await mongoose.connect(process.env.MONGODB_URL);
-        const email = "vishalpatel581012@gmail.com";
-        const user = await User.findOne({ email });
-        console.log(`Checking for ${email}:`, user ? "FOUND" : "NOT FOUND");
-        if (user) {
-            console.log("User details:", user);
-            // Optional: Delete it to allow re-registration for testing
-            // await User.deleteOne({ email }); 
-            // console.log("User deleted for testing purposes.");
-        }
+        const users = await User.find({});
+        console.log(`Total users found: ${users.length}`);
+        users.forEach(u => {
+            console.log(`- ${u.email} (Role: ${u.role}, Verified: ${u.isVerified}, Active: ${u.isActive})`);
+        });
         process.exit(0);
     } catch (e) {
         console.log(e);

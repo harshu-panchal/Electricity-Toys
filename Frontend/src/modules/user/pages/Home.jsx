@@ -10,6 +10,7 @@ import { Badge } from '../components/ui/badge';
 import { Card } from '../components/ui/card';
 import { staggerContainer, fadeIn, scaleUp } from '../lib/animations';
 import { Testimonials } from '../components/Testimonials';
+import api from '../../../lib/axios';
 
 export function Home() {
     const { content, fetchPageContent, loading: contentLoading } = useContentStore();
@@ -27,8 +28,8 @@ export function Home() {
         // Fetch categories for the explorer nav
         const fetchCats = async () => {
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL || '/api/v1'}/category/all`);
-                const data = await response.json();
+                const response = await api.get('/category/all');
+                const data = response.data;
                 if (data.success) {
                     setBackendCategories(data.data);
                 }
@@ -40,8 +41,8 @@ export function Home() {
         // Fetch featured products
         const fetchProducts = async () => {
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL || '/api/v1'}/product`);
-                const data = await response.json();
+                const response = await api.get('/product');
+                const data = response.data;
                 if (data.success) {
                     // Just take first 4 for featured
                     setFeaturedProducts(data.products.slice(0, 4).map(p => ({
