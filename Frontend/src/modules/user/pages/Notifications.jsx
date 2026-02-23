@@ -1,11 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Check, Trash2, ShoppingBag, Info, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { cn } from '@/lib/utils';
-import api from '@/lib/axios';
-import { socket } from '@/lib/socket';
-import { useAuthStore } from '../store/authStore';
 import { useNotificationStore } from '../store/notificationStore';
 import { format } from 'date-fns';
 
@@ -142,7 +139,7 @@ const Notifications = () => {
                                 <Bell className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
                                 <h3 className="text-lg font-bold text-muted-foreground mb-2">No notifications yet</h3>
                                 <p className="text-sm text-muted-foreground/50">
-                                    When you get orders or updates, they'll appear here.
+                                    When you get orders or updates, they&apos;ll appear here.
                                 </p>
                             </motion.div>
                         )}

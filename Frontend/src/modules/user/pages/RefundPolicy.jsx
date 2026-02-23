@@ -8,7 +8,7 @@ const RefundPolicy = () => {
 
     useEffect(() => {
         fetchPageContent('legalPages');
-    }, []);
+    }, [fetchPageContent]);
 
     const data = refundPolicy || {
         title: 'Refund Policy',

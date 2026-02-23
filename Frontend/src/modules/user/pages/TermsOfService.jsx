@@ -8,7 +8,7 @@ const TermsOfService = () => {
 
     useEffect(() => {
         fetchPageContent('legalPages');
-    }, []);
+    }, [fetchPageContent]);
 
     const data = termsOfService || {
         title: 'Terms of Service',

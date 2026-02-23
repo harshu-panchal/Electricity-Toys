@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { useAuthStore } from '../../user/store/authStore';
 import { Button } from '../../user/components/ui/button';
 import { Input } from '../../user/components/ui/input';

@@ -351,7 +351,7 @@ export function MyOrders() {
                                         <AlertTriangle className="h-4 w-4" /> Important
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                        Your cancel request will be reviewed by admin. You'll be notified once processed.
+                                        Your cancel request will be reviewed by admin. You&apos;ll be notified once processed.
                                     </p>
                                 </div>
 
