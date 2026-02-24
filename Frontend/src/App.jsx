@@ -19,6 +19,8 @@ import { Login } from './modules/user/pages/Auth/Login';
 import { Signup } from './modules/user/pages/Auth/Signup';
 import { VerifyOtp } from './modules/user/pages/Auth/VerifyOtp';
 import { ForgotPassword } from './modules/user/pages/Auth/ForgotPassword';
+import { VerifyResetOtp } from './modules/user/pages/Auth/VerifyResetOtp';
+import { ResetPassword } from './modules/user/pages/Auth/ResetPassword';
 import { Checkout } from './modules/user/pages/Checkout';
 import { MyOrders } from './modules/user/pages/MyOrders';
 import { OrderSuccess } from './modules/user/pages/OrderSuccess';
@@ -41,6 +43,9 @@ import Analytics from './modules/admin/pages/Analytics';
 import Profile from './modules/admin/pages/Profile';
 import Notifications from './modules/admin/pages/Notifications';
 import AdminLogin from './modules/admin/pages/Auth/AdminLogin';
+import AdminForgotPassword from './modules/admin/pages/Auth/AdminForgotPassword';
+import AdminVerifyResetOtp from './modules/admin/pages/Auth/AdminVerifyResetOtp';
+import AdminResetPassword from './modules/admin/pages/Auth/AdminResetPassword';
 
 // Content Management
 import { HomeContent } from './modules/admin/pages/Content/HomeContent';
@@ -107,6 +112,9 @@ function App() {
         <Routes>
           {/* Admin Auth Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
+          <Route path="/admin/verify-reset-otp" element={<AdminVerifyResetOtp />} />
+          <Route path="/admin/reset-password" element={<AdminResetPassword />} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
@@ -147,6 +155,8 @@ function App() {
             <Route path="signup" element={<Signup />} />
             <Route path="verify-otp" element={<VerifyOtp />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
+            <Route path="verify-reset-otp" element={<VerifyResetOtp />} />
+            <Route path="reset-password" element={<ResetPassword />} />
             <Route path="checkout" element={<Checkout />} />
             <Route path="orders" element={<MyOrders />} />
             <Route path="order-success" element={<OrderSuccess />} />

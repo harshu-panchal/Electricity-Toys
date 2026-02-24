@@ -101,6 +101,15 @@ export default function AdminLogin() {
                                 />
                             </div>
 
+                            <div className="flex justify-end p-1">
+                                <Link
+                                    to="/admin/forgot-password"
+                                    className="text-xs font-black uppercase tracking-widest text-primary hover:text-primary/80 transition-colors"
+                                >
+                                    Forgot Password?
+                                </Link>
+                            </div>
+
                             <Button
                                 type="submit"
                                 className="w-full h-14 rounded-2xl text-lg font-black italic uppercase tracking-widest hover:scale-[1.02] transition-transform bg-primary text-primary-foreground shadow-lg shadow-primary/25"

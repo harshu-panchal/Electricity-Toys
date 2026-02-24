@@ -2,28 +2,45 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Mail } from "lucide-react";
 import { useToast } from "../../components/Toast";
+import { useAuthStore } from "../../store/authStore";
 
 export function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const forgotPassword = useAuthStore((state) => state.forgotPassword);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const result = await forgotPassword(email);
+
+      if (result.success) {
+        toast({
+          title: "OTP SENT! 📧",
+          description: "Check your inbox for the 6-digit verification code.",
+          variant: "success",
+        });
+        navigate("/verify-reset-otp", { state: { email } });
+      } else {
+        toast({
+          title: "ERROR",
+          description: result.error || "Failed to send reset OTP",
+          variant: "destructive",
+        });
+      }
+    } catch {
       toast({
-        title: "RECOVERY EMAIL SENT! 📧",
-        description: "Check your inbox for password reset instructions.",
-        variant: "default",
+        title: "ERROR",
+        description: "An unexpected error occurred",
+        variant: "destructive",
       });
-      // Optional: navigate back to login after success
-      navigate("/login");
-    }, 1500);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -46,8 +63,7 @@ export function ForgotPassword() {
               Forgot Password?
             </h1>
             <p className="text-base text-muted-foreground">
-              Don&apos;t worry! It happens. Please enter the email associated
-              with your account.
+              Don&apos;t worry! It happens. Enter your email to receive a 6-digit OTP code to reset your password.
             </p>
           </div>
 
@@ -74,7 +90,7 @@ export function ForgotPassword() {
               type="submit"
               disabled={isLoading}
               className="w-full h-14 bg-foreground text-background rounded-full font-bold text-lg hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2 mt-4">
-              {isLoading ? "Sending Link..." : "Send Recovery Email"}
+              {isLoading ? "Sending OTP..." : "Send OTP"}
             </button>
           </form>
 
@@ -101,7 +117,7 @@ export function ForgotPassword() {
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
               Secure & Safe
               <br />
-              Account Recovery
+              OTP Verification
             </h2>
             <p className="text-gray-300 text-lg mb-10 max-w-lg">
               We ensure your account security is our top priority. Reset your

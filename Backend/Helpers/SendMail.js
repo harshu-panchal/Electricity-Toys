@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-export const sendOTPEmail = async (to, otp) => {
+export const sendOTPEmail = async (to, otp, subject = "Verify Your Account - OTP", title = "Account Verification") => {
   try {
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",   // ya apna SMTP
@@ -15,9 +15,9 @@ export const sendOTPEmail = async (to, otp) => {
     const mailOptions = {
       from: `"ElectriciToys" <${process.env.EMAIL_USER}>`,
       to,
-      subject: "Verify Your Account - OTP",
+      subject,
       html: `
-        <h3>Account Verification</h3>
+        <h3>${title}</h3>
         <p>Your OTP is:</p>
         <h2>${otp}</h2>
         <p>This OTP is valid for 10 minutes</p>

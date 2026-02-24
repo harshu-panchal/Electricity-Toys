@@ -60,6 +60,13 @@ io.on("connection", (socket) => {
 // ✅ API routes
 app.use("/", routes);
 
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `API Route not found: [${req.method}] ${req.originalUrl}`,
+  });
+});
 
 // ✅ Error handler
 app.use(errorHandler);

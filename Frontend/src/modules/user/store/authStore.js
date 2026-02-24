@@ -82,6 +82,42 @@ export const useAuthStore = create(
                     };
                 }
             },
+
+            forgotPassword: async (email) => {
+                try {
+                    const response = await api.post('/auth/forgot-password', { email, role: 'user' });
+                    return { success: response.data.success, message: response.data.message };
+                } catch (error) {
+                    return {
+                        success: false,
+                        error: error.response?.data?.message || 'Request failed'
+                    };
+                }
+            },
+
+            verifyResetOtp: async (email, otp) => {
+                try {
+                    const response = await api.post('/auth/verify-reset-otp', { email, otp });
+                    return { success: response.data.success, message: response.data.message };
+                } catch (error) {
+                    return {
+                        success: false,
+                        error: error.response?.data?.message || 'Verification failed'
+                    };
+                }
+            },
+
+            resetPassword: async (data) => {
+                try {
+                    const response = await api.post('/auth/reset-password', data);
+                    return { success: response.data.success, message: response.data.message };
+                } catch (error) {
+                    return {
+                        success: false,
+                        error: error.response?.data?.message || 'Reset failed'
+                    };
+                }
+            },
         }),
         {
             name: 'auth-storage', // unique name for localStorage key

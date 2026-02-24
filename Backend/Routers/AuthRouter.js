@@ -13,6 +13,9 @@ import {
     userProfile,
     userProfileById,
     setPassword,
+    forgotPassword,
+    verifyResetOTP,
+    resetPassword,
 } from "../Controller/AuthCtrl.js";
 
 import { AuthMiddleware, isAdmin } from "../Middlewares/AuthMiddleware.js";
@@ -25,6 +28,9 @@ router.post("/resend-otp", resendOTP);
 router.post("/login", loginUser);
 router.post("/admin-login", adminLogin); // New merged login/register route
 router.post("/verify", verifyUser);
+router.post("/forgot-password", forgotPassword);
+router.post("/verify-reset-otp", verifyResetOTP);
+router.post("/reset-password", resetPassword);
 
 router.post("/change-password", AuthMiddleware, changePassword);
 router.post("/setPassword", AuthMiddleware, setPassword);
