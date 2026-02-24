@@ -269,6 +269,17 @@ export const getOrderById = async (req, res) => {
 
     if (!order) return res.status(404).json({ success: false, message: "Order not found" });
 
+    // Check if user owns the order or is an admin
+    const isOwner = order.userId._id.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === "admin";
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "You are not authorized to view this order" 
+      });
+    }
+
     res.json({ success: true, order });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

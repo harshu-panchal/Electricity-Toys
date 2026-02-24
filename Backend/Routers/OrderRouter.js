@@ -42,7 +42,7 @@ router.put("/admin/complete-refund", AuthMiddleware, isAdmin, adminCompleteRefun
 router.post("/", AuthMiddleware, placeOrder);
 router.post("/verify-payment", AuthMiddleware, verifyPayment);
 router.get("/user", AuthMiddleware, getUserOrders);
-router.get("/:id", getOrderById);
+router.get("/:id", AuthMiddleware, getOrderById); // Protected - User must own order or be admin
 
 // User Cancel/Return Requests
 router.put("/request-cancel", AuthMiddleware, requestCancelOrder);

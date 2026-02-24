@@ -79,8 +79,7 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// ================= ADMIN LOGIN (AUTO-REGISTER) =================
-// ================= ADMIN LOGIN (AUTO-REGISTER) =================
+// ================= ADMIN LOGIN (ADMIN-ONLY ACCESS) =================
 export const adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -91,56 +90,50 @@ export const adminLogin = async (req, res) => {
     }
 
     // Check if user exists
-    let user = await User.findOne({ email });
+    const user = await User.findOne({ email });
 
-    if (user) {
-      // User exists -> Simple Login check
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(400).json({ success: false, message: "Invalid credentials" });
-      }
+    if (!user) {
+      return res
+        .status(400)
+        .json({ success: false, message: "No account found with this email." });
+    }
 
-      // Ensure they have admin role? The user said "uske jese login ho to direct use role assin ho admin"
-      // We will strictly enforce admin access here or grant it if this special login is used (Security Policy Decision: Granting it as per user request to simplify)
-      if (user.role !== 'admin') {
-        user.role = 'admin'; // Grant admin role
-        await user.save();
-      }
-
-      return res.json({
-        success: true,
-        message: "Admin Login successful",
-        data: user,
-        token: generateToken(user._id),
-      });
-    } else {
-      // User does not exist -> Auto-Register as Admin
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-      // OTP is generated but we might skip verification enforcement for this specific flow if requested, 
-      // BUT strict security suggests we should still verify.
-      // However, user said "admin uske jese login ho to direct use role assin ho admin".
-      // Let's create them as verified=true for seamless "Login-like" experience if that's the intention, 
-      // OR standard flow. Given "Direct use role assign", I'll make them active immediately.
-
-      user = await User.create({
-        fullName: "Admin", // Default name as per user request to not store business name
-        email,
-        password: hashedPassword,
-        role: 'admin',
-        isVerified: true, // Auto-verified for this specific admin portal flow
-        isActive: true
-      });
-
-      console.log("New Admin Created:", user._id);
-
-      return res.json({
-        success: true,
-        message: "Admin Account Created & Logged In",
-        data: user,
-        token: generateToken(user._id),
+    // Only allow users whose role is admin to log in from this route
+    if (user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to access the admin panel. Please use customer login.",
       });
     }
+
+    // Password check
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid email or password." });
+    }
+
+    if (!user.isActive || user.isDeleted) {
+      return res.status(403).json({
+        success: false,
+        message: "This admin account is deactivated. Contact support.",
+      });
+    }
+
+    if (!user.isVerified) {
+      return res.status(403).json({
+        success: false,
+        message: "Admin account not verified. Please complete verification.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Admin login successful",
+      data: user,
+      token: generateToken(user._id),
+    });
   } catch (error) {
     console.error("Admin Login Error:", error);
     res.status(500).json({ success: false, message: "Server error", data: null });

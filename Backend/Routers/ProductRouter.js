@@ -18,6 +18,6 @@ router.get("/", getAllProducts);           // Read All
 router.get("/:id", getProductById);        // Read One
 router.put("/:id", AuthMiddleware, isAdmin, upload.array("images"), updateProduct);         // Update
 router.delete("/:id", AuthMiddleware, isAdmin, deleteProduct);      // Delete (Soft)
-router.post("/:id/reviews", createProductReview); // Add Review
+router.post("/:id/reviews", AuthMiddleware, createProductReview); // Add Review - Protected (User must be authenticated)
 
 export default router;

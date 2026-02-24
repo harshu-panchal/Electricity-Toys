@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from 'react-router-dom';
 
 // Layouts
 import { UserLayout } from './modules/user/layout/UserLayout';
@@ -70,8 +70,30 @@ const ExperienceContentEditor = () => <ExperienceContent />;
 
 import { socket } from './lib/socket';
 import { useAuthStore } from './modules/user/store/authStore';
+import { useAdminAuthStore } from './modules/admin/store/adminAuthStore';
 import { useNotificationStore } from './modules/user/store/notificationStore';
 import UserNotifications from './modules/user/pages/Notifications';
+
+// ================= ROUTE GUARDS =================
+const RequireUserAuth = ({ children }) => {
+  const { isAuthenticated } = useAuthStore();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+const RequireAdminAuth = ({ children }) => {
+  const { isAuthenticated, admin } = useAdminAuthStore();
+
+  if (!isAuthenticated || admin?.role !== 'admin') {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  return children;
+};
 
 function App() {
   const { isAuthenticated, user } = useAuthStore();
@@ -116,8 +138,15 @@ function App() {
           <Route path="/admin/verify-reset-otp" element={<AdminVerifyResetOtp />} />
           <Route path="/admin/reset-password" element={<AdminResetPassword />} />
 
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
+          {/* Admin Routes (Protected) */}
+          <Route
+            path="/admin"
+            element={
+              <RequireAdminAuth>
+                <AdminLayout />
+              </RequireAdminAuth>
+            }
+          >
             <Route index element={<AdminDashboard />} />
             <Route path="categories" element={<CategoryManager />} />
             <Route path="products" element={<ProductList />} />
@@ -147,8 +176,22 @@ function App() {
             <Route path="product/:id" element={<ProductDetail />} />
             <Route path="about" element={<About />} />
             <Route path="contact" element={<Contact />} />
-            <Route path="wishlist" element={<Wishlist />} />
-            <Route path="cart" element={<Cart />} />
+            <Route
+              path="wishlist"
+              element={
+                <RequireUserAuth>
+                  <Wishlist />
+                </RequireUserAuth>
+              }
+            />
+            <Route
+              path="cart"
+              element={
+                <RequireUserAuth>
+                  <Cart />
+                </RequireUserAuth>
+              }
+            />
             <Route path="gallery" element={<Gallery />} />
             <Route path="experience" element={<Experience />} />
             <Route path="login" element={<Login />} />
@@ -157,14 +200,42 @@ function App() {
             <Route path="forgot-password" element={<ForgotPassword />} />
             <Route path="verify-reset-otp" element={<VerifyResetOtp />} />
             <Route path="reset-password" element={<ResetPassword />} />
-            <Route path="checkout" element={<Checkout />} />
-            <Route path="orders" element={<MyOrders />} />
+            <Route
+              path="checkout"
+              element={
+                <RequireUserAuth>
+                  <Checkout />
+                </RequireUserAuth>
+              }
+            />
+            <Route
+              path="orders"
+              element={
+                <RequireUserAuth>
+                  <MyOrders />
+                </RequireUserAuth>
+              }
+            />
             <Route path="order-success" element={<OrderSuccess />} />
             <Route path="privacy-policy" element={<PrivacyPolicy />} />
             <Route path="terms-of-service" element={<TermsOfService />} />
             <Route path="refund-policy" element={<RefundPolicy />} />
-            <Route path="profile" element={<UserProfile />} />
-            <Route path="notifications" element={<UserNotifications />} />
+            <Route
+              path="profile"
+              element={
+                <RequireUserAuth>
+                  <UserProfile />
+                </RequireUserAuth>
+              }
+            />
+            <Route
+              path="notifications"
+              element={
+                <RequireUserAuth>
+                  <UserNotifications />
+                </RequireUserAuth>
+              }
+            />
             <Route path="*" element={<Placeholder title="404 - Not Found" emoji="😵" />} />
           </Route>
         </Routes>

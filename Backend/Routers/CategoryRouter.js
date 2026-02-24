@@ -13,10 +13,10 @@ import { AuthMiddleware, isAdmin } from "../Middlewares/AuthMiddleware.js";
 
 const router = express.Router();
 
-router.post("/create", upload.single("image"), createCategory);
-router.get("/all", getAllCategories);
-router.get("/:id", getCategoryById);
-router.put("/update/:id", upload.single("image"), updateCategory);
-router.delete("/delete/:id", deleteCategory);
+router.post("/create", AuthMiddleware, isAdmin, upload.single("image"), createCategory); // Protected - Admin only
+router.get("/all", getAllCategories); // Public - Anyone can view categories
+router.get("/:id", getCategoryById); // Public - Anyone can view category details
+router.put("/update/:id", AuthMiddleware, isAdmin, upload.single("image"), updateCategory); // Protected - Admin only
+router.delete("/delete/:id", AuthMiddleware, isAdmin, deleteCategory); // Protected - Admin only
 
 export default router;
