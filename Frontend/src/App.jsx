@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Outlet, Navigate, useLocation } from 'react-router-dom';
 
 // Layouts
 import { UserLayout } from './modules/user/layout/UserLayout';
@@ -77,9 +77,10 @@ import UserNotifications from './modules/user/pages/Notifications';
 // ================= ROUTE GUARDS =================
 const RequireUserAuth = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
+  const location = useLocation();
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
   return children;
@@ -87,9 +88,22 @@ const RequireUserAuth = ({ children }) => {
 
 const RequireAdminAuth = ({ children }) => {
   const { isAuthenticated, admin } = useAdminAuthStore();
+  const location = useLocation();
 
-  if (!isAuthenticated || admin?.role !== 'admin') {
-    return <Navigate to="/admin/login" replace />;
+  // Strict check: must be authenticated AND have admin role
+  if (!isAuthenticated || !admin || admin.role !== 'admin') {
+    console.warn("Unauthorized access to admin route redirected to login");
+    return <Navigate to="/admin/login" state={{ from: location.pathname }} replace />;
+  }
+
+  return children;
+};
+
+const PublicAdminRoute = ({ children }) => {
+  const { isAuthenticated, admin } = useAdminAuthStore();
+
+  if (isAuthenticated && admin?.role === 'admin') {
+    return <Navigate to="/admin" replace />;
   }
 
   return children;
@@ -133,10 +147,10 @@ function App() {
         <ScrollToTop />
         <Routes>
           {/* Admin Auth Routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
-          <Route path="/admin/verify-reset-otp" element={<AdminVerifyResetOtp />} />
-          <Route path="/admin/reset-password" element={<AdminResetPassword />} />
+          <Route path="/admin/login" element={<PublicAdminRoute><AdminLogin /></PublicAdminRoute>} />
+          <Route path="/admin/forgot-password" element={<PublicAdminRoute><AdminForgotPassword /></PublicAdminRoute>} />
+          <Route path="/admin/verify-reset-otp" element={<PublicAdminRoute><AdminVerifyResetOtp /></PublicAdminRoute>} />
+          <Route path="/admin/reset-password" element={<PublicAdminRoute><AdminResetPassword /></PublicAdminRoute>} />
 
           {/* Admin Routes (Protected) */}
           <Route

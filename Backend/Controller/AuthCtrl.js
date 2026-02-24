@@ -85,58 +85,77 @@ export const adminLogin = async (req, res) => {
     const { email, password } = req.body;
     console.log("Admin Login Attempt:", { email });
 
+    // 1. Basic Validation
     if (!email || !password) {
-      return res.status(400).json({ success: false, message: "Email and password are required" });
-    }
-
-    // Check if user exists
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res
-        .status(400)
-        .json({ success: false, message: "No account found with this email." });
-    }
-
-    // Only allow users whose role is admin to log in from this route
-    if (user.role !== "admin") {
-      return res.status(403).json({
+      return res.status(400).json({
         success: false,
-        message: "You are not authorized to access the admin panel. Please use customer login.",
+        message: "Email and password are required"
       });
     }
 
-    // Password check
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid email or password." });
+    // 2. Find User
+    const user = await User.findOne({ email: email.toLowerCase().trim(), isDeleted: false });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials or unauthorized access."
+      });
     }
 
-    if (!user.isActive || user.isDeleted) {
+    // 3. Strict Role Check (CRITICAL)
+    if (user.role !== "admin") {
+      console.warn(`Unauthorized login attempt to admin panel by user: ${email}`);
       return res.status(403).json({
         success: false,
-        message: "This admin account is deactivated. Contact support.",
+        message: "Access Denied: You do not have administrator privileges.",
+      });
+    }
+
+    // 4. Password check
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password."
+      });
+    }
+
+    // 5. Account Status Checks
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: "Your admin account is deactivated. Please contact the system owner.",
       });
     }
 
     if (!user.isVerified) {
       return res.status(403).json({
         success: false,
-        message: "Admin account not verified. Please complete verification.",
+        message: "Admin account not verified. Please complete the verification process.",
       });
     }
 
+    // 6. Success Response with Token
     return res.json({
       success: true,
       message: "Admin login successful",
-      data: user,
+      data: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar || null
+      },
       token: generateToken(user._id),
     });
   } catch (error) {
-    console.error("Admin Login Error:", error);
-    res.status(500).json({ success: false, message: "Server error", data: null });
+    console.error("CRITICAL: Admin Login Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "An internal server error occurred.",
+      data: null
+    });
   }
 };
 
