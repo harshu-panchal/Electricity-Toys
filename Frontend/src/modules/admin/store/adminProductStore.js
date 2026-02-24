@@ -195,7 +195,7 @@ export const useAdminProductStore = create(
 
                 try {
                     await api.put(`/product/${id}`, { isActive: newStatus });
-                } catch (error) {
+                } catch {
                     // Revert on fail
                     set({
                         products: get().products.map((p) =>

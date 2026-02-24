@@ -72,7 +72,7 @@ export function Profile() {
                     variant: "destructive",
                 });
             }
-        } catch (error) {
+        } catch {
             toast({
                 title: "ERROR",
                 description: "Something went wrong. Please try again.",

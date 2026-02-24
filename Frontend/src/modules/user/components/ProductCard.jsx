@@ -8,7 +8,7 @@ import { useAuthStore } from '../store/authStore';
 import { useToast } from './Toast';
 import { useNavigate } from 'react-router-dom';
 
-import { productCardVariants, imageHover } from '../lib/animations';
+import { imageHover } from '../lib/animations';
 
 export function ProductCard({ product, onQuickView }) {
     const addItem = useCartStore((state) => state.addItem);

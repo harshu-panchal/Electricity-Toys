@@ -68,7 +68,7 @@ export function Cart() {
                     <div className="py-20 flex flex-col items-center justify-center text-center space-y-6">
                         <div className="text-9xl mb-4">🛒</div>
                         <h2 className="text-4xl font-black uppercase italic tracking-tighter">Your bag is empty</h2>
-                        <p className="text-muted-foreground font-medium italic text-lg">Looks like you haven't added any electric thrills yet.</p>
+                        <p className="text-muted-foreground font-medium italic text-lg">Looks like you haven&apos;t added any electric thrills yet.</p>
                         <Button asChild size="lg" className="rounded-full h-14 px-10 font-bold italic tracking-tighter text-xl shadow-xl shadow-primary/20">
                             <Link to="/products">START SHOPPING</Link>
                         </Button>

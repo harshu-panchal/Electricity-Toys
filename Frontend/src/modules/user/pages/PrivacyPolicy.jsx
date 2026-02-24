@@ -8,7 +8,7 @@ const PrivacyPolicy = () => {
 
     useEffect(() => {
         fetchPageContent('legalPages');
-    }, []);
+    }, [fetchPageContent]);
 
     // Fallback default
     const data = privacyPolicy || {

@@ -123,7 +123,7 @@ export function ProductReviews({ reviews: initialReviews = [], productId }) {
                                             </div>
                                             <div className="text-xs text-muted-foreground mb-2 font-mono">{date}</div>
                                             <p className="text-muted-foreground text-sm font-medium italic leading-relaxed mb-4">
-                                                "{content}"
+                                                &quot;{content}&quot;
                                             </p>
 
                                             {/* Posted Images */}
