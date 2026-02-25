@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAdminProductStore } from '../../store/adminProductStore';
 import { Button } from '../../../user/components/ui/button';
 import { Plus, Trash2, Tag, Image as ImageIcon, X } from 'lucide-react';
-import { optimizeImageUrl } from '../../../../lib/utils';
+import { optimizeImageUrl, compressImage } from '../../../../lib/utils';
 import { Badge } from '../../../user/components/ui/badge';
 
 export default function CategoryManager() {
@@ -31,7 +31,8 @@ export default function CategoryManager() {
             formData.append('categoryName', newCategory.trim());
             formData.append('description', 'Added via Admin Panel');
             if (image) {
-                formData.append('image', image);
+                const compressed = await compressImage(image, 1600, 0.8);
+                formData.append('image', compressed || image);
             }
             await addCategory(formData);
             setNewCategory('');
