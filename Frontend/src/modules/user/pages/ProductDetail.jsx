@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Heart, Star, Shield, Truck, Minus, Plus, Zap } from 'lucide-react';
+import { optimizeImageUrl, buildSrcSet } from '../../../lib/utils';
 import { useCartStore } from '../store/cartStore';
 import { useWishlistStore } from '../store/wishlistStore';
 import { ProductReviews } from '../components/ProductReviews';
@@ -163,7 +164,8 @@ export function ProductDetail() {
                         <div className="aspect-square rounded-none border-2 border-primary/10 bg-secondary/20 flex items-center justify-center relative overflow-hidden group">
                             {activeImage ? (
                                 <img
-                                    src={activeImage}
+                                    src={optimizeImageUrl(activeImage)}
+                                    srcSet={buildSrcSet(activeImage)}
                                     alt={product.name}
                                     className="w-full h-full object-cover"
                                     onError={(e) => e.target.style.display = 'none'}
@@ -194,8 +196,8 @@ export function ProductDetail() {
                                             }
                                         }}
                                     >
-                                        {img ? (
-                                            <img src={img} alt="" className="w-full h-full object-cover opacity-70 hover:opacity-100 transition-opacity" onError={(e) => e.target.style.display = 'none'} />
+                                            {img ? (
+                                                <img src={optimizeImageUrl(img, 600)} alt="" className="w-full h-full object-cover opacity-70 hover:opacity-100 transition-opacity" onError={(e) => e.target.style.display = 'none'} />
                                         ) : '🎮'}
                                     </div>
                                 ))}

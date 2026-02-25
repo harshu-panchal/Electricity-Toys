@@ -9,6 +9,7 @@ import { useToast } from './Toast';
 import { useNavigate } from 'react-router-dom';
 
 import { imageHover } from '../lib/animations';
+import { optimizeImageUrl, buildSrcSet } from '../../../lib/utils';
 
 export function ProductCard({ product, onQuickView }) {
     const addItem = useCartStore((state) => state.addItem);
@@ -112,7 +113,8 @@ export function ProductCard({ product, onQuickView }) {
                     >
                         {product.image ? (
                             <img
-                                src={product.image}
+                                src={optimizeImageUrl(product.image)}
+                                srcSet={buildSrcSet(product.image)}
                                 alt={product.name}
                                 className="w-full h-full object-cover"
                             />

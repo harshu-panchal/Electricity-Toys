@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAdminProductStore } from '../../store/adminProductStore';
 import { Button } from '../../../user/components/ui/button';
 import { Plus, Trash2, Tag, Image as ImageIcon, X } from 'lucide-react';
+import { optimizeImageUrl } from '../../../../lib/utils';
 import { Badge } from '../../../user/components/ui/badge';
 
 export default function CategoryManager() {
@@ -131,7 +132,7 @@ export default function CategoryManager() {
                             <div className="flex items-center gap-3 md:gap-4">
                                 <div className="h-10 w-10 md:h-12 md:w-12 rounded-2xl bg-secondary/10 flex items-center justify-center text-primary overflow-hidden">
                                     {category.image ? (
-                                        <img src={category.image} alt={category.categoryName} className="w-full h-full object-cover" />
+                                        <img src={optimizeImageUrl(category.image, 300)} alt={category.categoryName} className="w-full h-full object-cover" />
                                     ) : (
                                         <Tag className="h-5 w-5 md:h-6 md:w-6" />
                                     )}

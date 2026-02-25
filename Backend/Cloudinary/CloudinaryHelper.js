@@ -1,16 +1,26 @@
 import cloudinary from "./Cloudinary.js";
 import streamifier from "streamifier";
 
-// ================= UPLOAD =================
 export const uploadToCloudinary = (fileBuffer, folderName) => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder: folderName },
+      {
+        folder: folderName,
+        transformation: [
+          { width: 1200, crop: "limit", fetch_format: "auto", quality: "auto" }
+        ]
+      },
       (error, result) => {
         if (result) {
+          const optimizedUrl = result.secure_url?.includes("/upload/")
+            ? result.secure_url.replace(
+                "/upload/",
+                "/upload/f_auto,q_auto,c_limit,w_1200/"
+              )
+            : result.secure_url;
           resolve({
             success: true,
-            url: result.secure_url,
+            url: optimizedUrl,
             public_id: result.public_id,
           });
         } else {
@@ -23,13 +33,11 @@ export const uploadToCloudinary = (fileBuffer, folderName) => {
   });
 };
 
-
 // ================= DELETE =================
 export const deleteFromCloudinary = async (publicId) => {
   const result = await cloudinary.uploader.destroy(publicId);
   return result;
 };
-
 
 // ================= UPDATE =================
 export const updateCloudinaryImage = async (oldPublicId, fileBuffer, folderName) => {

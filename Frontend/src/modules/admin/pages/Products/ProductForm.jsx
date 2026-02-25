@@ -29,6 +29,7 @@ import {
   Search,
 } from "lucide-react";
 import { useToast } from "../../../user/components/Toast";
+import { compressImage } from "../../../../lib/utils";
 
 export default function ProductForm() {
   const { id } = useParams();
@@ -263,16 +264,20 @@ export default function ProductForm() {
 
       data.append("variants", JSON.stringify(textVariants));
 
-      // Append variant files
-      variants.forEach((v) => {
-        if (v.file) data.append("images", v.file);
-      });
+      // Append variant files (compressed)
+      for (const v of variants) {
+        if (v.file) {
+          const compressed = await compressImage(v.file, 1600, 0.8);
+          data.append("images", compressed || v.file);
+        }
+      }
 
       // Append General files (if any)
       if (selectedFiles.length > 0) {
-        selectedFiles.forEach((file) => {
-          data.append("images", file);
-        });
+        for (const file of selectedFiles) {
+          const compressed = await compressImage(file, 1600, 0.8);
+          data.append("images", compressed || file);
+        }
       }
 
       let result;
