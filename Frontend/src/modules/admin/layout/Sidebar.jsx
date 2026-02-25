@@ -14,6 +14,7 @@ export function Sidebar({ isOpen, onClose, onLogout }) {
         { name: 'ORDERS', icon: ShoppingBag, path: '/admin/orders' },
         { name: 'SHIPPING', icon: Truck, path: '/admin/shipping' },
         { name: 'ANALYTICS', icon: BarChart2, path: '/admin/analytics' },
+        { name: 'USERS', icon: User, path: '/admin/users' },
         {
             name: 'CONTENT MANAGEMENT',
             isHeader: true

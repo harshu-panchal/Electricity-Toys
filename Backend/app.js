@@ -13,6 +13,7 @@ import ShippingRouter from "./Routers/ShippingRouter.js";
 import ContactRouter from "./Routers/ContactRouter.js";
 
 import NotificationRouter from "./Routers/NotificationRouter.js";
+import AdminUserRouter from "./Routers/AdminUserRouter.js";
 
 const router = Router();
 
@@ -29,5 +30,6 @@ router.use("/api/v1/contact", ContactRouter);
 router.use("/api/v1/noification", NotificationRouter); // Typo intentional? No, stick to clean 'notifications'
 router.use("/api/v1/notifications", NotificationRouter);
 router.use("/api/v1", DashboardReportRouter);
+router.use("/api/v1/admin/users", AdminUserRouter);
 
 export default router;

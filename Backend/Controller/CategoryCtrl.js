@@ -1,4 +1,5 @@
 import Category from "../Models/CategoryModel.js";
+import { isValidObjectId } from "mongoose";
 import { uploadToCloudinary, deleteFromCloudinary } from "../Cloudinary/CloudinaryHelper.js";
 
 
@@ -63,6 +64,13 @@ export const getAllCategories = async (req, res) => {
 
 // ================= GET BY ID =================
 export const getCategoryById = async (req, res) => {
+  if (!isValidObjectId(req.params.id)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid category id",
+      data: null
+    });
+  }
   const category = await Category.findById(req.params.id);
 
   if (!category) {
@@ -86,6 +94,13 @@ export const updateCategory = async (req, res) => {
   try {
     const { categoryName, description } = req.body;
 
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid category id",
+        data: null
+      });
+    }
     const category = await Category.findById(req.params.id);
     if (!category) {
       return res.status(404).json({
@@ -133,6 +148,13 @@ export const updateCategory = async (req, res) => {
 // ================= DELETE =================
 export const deleteCategory = async (req, res) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid category id",
+        data: null
+      });
+    }
     const category = await Category.findById(req.params.id);
 
     if (!category) {

@@ -47,6 +47,8 @@ import AdminForgotPassword from './modules/admin/pages/Auth/AdminForgotPassword'
 import AdminVerifyResetOtp from './modules/admin/pages/Auth/AdminVerifyResetOtp';
 import AdminResetPassword from './modules/admin/pages/Auth/AdminResetPassword';
 
+import UserList from './modules/admin/pages/Users/UserList';
+import UserDetail from './modules/admin/pages/Users/UserDetail';
 // Content Management
 import { HomeContent } from './modules/admin/pages/Content/HomeContent';
 import { AboutContent } from './modules/admin/pages/Content/AboutContent';
@@ -170,6 +172,8 @@ function App() {
             <Route path="orders/:id" element={<OrderDetail />} />
             <Route path="shipping" element={<ShippingSettings />} />
             <Route path="analytics" element={<Analytics />} />
+            <Route path="users" element={<UserList />} />
+            <Route path="users/:id" element={<UserDetail />} />
 
             {/* Content Management */}
             <Route path="content/home" element={<HomeContent />} />
