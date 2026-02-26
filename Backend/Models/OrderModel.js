@@ -83,7 +83,6 @@ const orderSchema = new mongoose.Schema(
     // =================== RETURN FIELDS ===================
     returnReason: {
       type: String,
-      enum: ["Wrong Product Delivered", "Defective / Damaged Product", null],
       default: null
     },
     returnRequestedAt: { type: Date },

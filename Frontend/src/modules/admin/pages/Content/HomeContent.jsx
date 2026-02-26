@@ -5,16 +5,17 @@ import { Input } from '../../../user/components/ui/input';
 import { Label } from '../../../user/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../user/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../user/components/ui/card';
-import { Plus, Trash2, Save, RotateCcw, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Save, RotateCcw, Loader2, Upload, ImageIcon } from 'lucide-react';
 import { useToast } from '../../../user/components/Toast';
 
 export function HomeContent() {
-    const { content, fetchPageContent, updatePageContent, fetchBackendCategories, loading } = useContentStore();
+    const { content, fetchPageContent, updatePageContent, fetchBackendCategories, uploadContentImage, loading } = useContentStore();
     const { toast } = useToast();
     const [homeData, setHomeData] = useState(content.homePage);
     const [testimonials, setTestimonials] = useState(content.testimonials || []);
     const [backendCategories, setBackendCategories] = useState([]);
     const [isInitialLoading, setIsInitialLoading] = useState(true);
+    const [uploadingIndex, setUploadingIndex] = useState(null); // track which category card is uploading
 
     useEffect(() => {
         const loadData = async () => {
@@ -258,14 +259,50 @@ export function HomeContent() {
                         </CardHeader>
                         <CardContent className="p-4 md:p-6 space-y-4 md:space-y-6">
                             <div className="space-y-2">
-                                <Label className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Background Image URL</Label>
-                                <Input
-                                    value={homeData.hero.image || (homeData.hero.images && homeData.hero.images[0]) || ''}
-                                    onChange={(e) => updateHero('image', e.target.value)}
-                                    placeholder="/hero.png"
-                                    className="h-10 md:h-12 bg-secondary/5 border-secondary/20 text-xs md:text-sm"
-                                />
-                                <p className="text-[9px] md:text-[10px] text-muted-foreground ml-1">Recommended size: 1920x1080px</p>
+                                <Label className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Background Image</Label>
+                                <div className="flex items-start gap-4">
+                                    <div className="h-24 w-40 md:h-28 md:w-48 rounded-xl border-2 border-dashed border-secondary/30 bg-secondary/5 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                        {(homeData.hero.image || (homeData.hero.images && homeData.hero.images[0])) ? (
+                                            <img src={homeData.hero.image || homeData.hero.images[0]} alt="Hero" className="h-full w-full object-cover rounded-xl" />
+                                        ) : (
+                                            <ImageIcon className="h-10 w-10 text-muted-foreground/30" />
+                                        )}
+                                    </div>
+                                    <div className="flex-1 space-y-2">
+                                        <label
+                                            className={`flex items-center gap-2 h-10 md:h-12 px-4 rounded-xl border border-secondary/20 bg-secondary/5 cursor-pointer hover:bg-primary/5 hover:border-primary/30 transition-all text-xs md:text-sm font-bold ${
+                                                uploadingIndex === 'hero' ? 'opacity-50 pointer-events-none' : ''
+                                            }`}
+                                        >
+                                            {uploadingIndex === 'hero' ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Upload className="h-4 w-4" />
+                                            )}
+                                            {uploadingIndex === 'hero' ? 'Uploading...' : 'Upload Background'}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+                                                    setUploadingIndex('hero');
+                                                    const result = await uploadContentImage(file);
+                                                    if (result.success) {
+                                                        updateHero('image', result.url);
+                                                        toast({ title: 'Image Uploaded', description: 'Hero background updated.' });
+                                                    } else {
+                                                        toast({ title: 'Upload Failed', description: result.error, variant: 'destructive' });
+                                                    }
+                                                    setUploadingIndex(null);
+                                                    e.target.value = '';
+                                                }}
+                                            />
+                                        </label>
+                                        <p className="text-[9px] md:text-[10px] text-muted-foreground ml-1">Recommended: 1920x1080px • JPG, PNG, WebP</p>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="space-y-2">
@@ -510,13 +547,58 @@ export function HomeContent() {
                                         />
                                     </div>
                                     <div className="space-y-1 col-span-2">
-                                        <Label className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Image URL</Label>
-                                        <Input
-                                            value={category.image}
-                                            onChange={(e) => updateCategory(index, 'image', e.target.value)}
-                                            placeholder="/assets/products/..."
-                                            className="h-9 md:h-10 bg-secondary/5 border-secondary/20 text-xs md:text-sm"
-                                        />
+                                        <Label className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Category Image</Label>
+                                        <div className="flex items-start gap-3">
+                                            {/* Preview */}
+                                            <div className="h-20 w-20 md:h-24 md:w-24 rounded-xl border-2 border-dashed border-secondary/30 bg-secondary/5 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                {category.image && category.image !== '/placeholder.jpg' ? (
+                                                    <img src={category.image} alt={category.name} className="h-full w-full object-cover rounded-xl" />
+                                                ) : (
+                                                    <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
+                                                )}
+                                            </div>
+                                            <div className="flex-1 space-y-2">
+                                                <label
+                                                    className={`flex items-center gap-2 h-9 md:h-10 px-4 rounded-xl border border-secondary/20 bg-secondary/5 cursor-pointer hover:bg-primary/5 hover:border-primary/30 transition-all text-xs md:text-sm font-bold ${
+                                                        uploadingIndex === index ? 'opacity-50 pointer-events-none' : ''
+                                                    }`}
+                                                >
+                                                    {uploadingIndex === index ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <Upload className="h-4 w-4" />
+                                                    )}
+                                                    {uploadingIndex === index ? 'Uploading...' : 'Upload Image'}
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={async (e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (!file) return;
+                                                            setUploadingIndex(index);
+                                                            const result = await uploadContentImage(file);
+                                                            if (result.success) {
+                                                                updateCategory(index, 'image', result.url);
+                                                                toast({
+                                                                    title: 'Image Uploaded',
+                                                                    description: 'Category image uploaded successfully.'
+                                                                });
+                                                            } else {
+                                                                toast({
+                                                                    title: 'Upload Failed',
+                                                                    description: result.error || 'Failed to upload image.',
+                                                                    variant: 'destructive'
+                                                                });
+                                                            }
+                                                            setUploadingIndex(null);
+                                                            e.target.value = ''; // reset input
+                                                        }}
+                                                    />
+                                                </label>
+                                                <p className="text-[9px] md:text-[10px] text-muted-foreground ml-1">JPG, PNG, WebP • Max 10MB</p>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="space-y-1">
                                         <Label className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">CTA Text</Label>
@@ -592,12 +674,47 @@ export function HomeContent() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Customer Image URL</Label>
-                                        <Input
-                                            value={testimonial.image}
-                                            onChange={(e) => updateTestimonial(index, 'image', e.target.value)}
-                                            className="h-9 md:h-10 bg-secondary/5 border-secondary/20 text-xs md:text-sm"
-                                        />
+                                        <Label className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Customer Image</Label>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-12 w-12 rounded-full border-2 border-dashed border-secondary/30 bg-secondary/5 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                {testimonial.image ? (
+                                                    <img src={testimonial.image} alt={testimonial.name} className="h-full w-full object-cover rounded-full" />
+                                                ) : (
+                                                    <ImageIcon className="h-5 w-5 text-muted-foreground/30" />
+                                                )}
+                                            </div>
+                                            <label
+                                                className={`flex items-center gap-2 h-9 md:h-10 px-4 rounded-xl border border-secondary/20 bg-secondary/5 cursor-pointer hover:bg-primary/5 hover:border-primary/30 transition-all text-xs md:text-sm font-bold ${
+                                                    uploadingIndex === `testimonial-${index}` ? 'opacity-50 pointer-events-none' : ''
+                                                }`}
+                                            >
+                                                {uploadingIndex === `testimonial-${index}` ? (
+                                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                ) : (
+                                                    <Upload className="h-3.5 w-3.5" />
+                                                )}
+                                                {uploadingIndex === `testimonial-${index}` ? 'Uploading...' : 'Upload'}
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (!file) return;
+                                                        setUploadingIndex(`testimonial-${index}`);
+                                                        const result = await uploadContentImage(file);
+                                                        if (result.success) {
+                                                            updateTestimonial(index, 'image', result.url);
+                                                            toast({ title: 'Image Uploaded', description: 'Testimonial image updated.' });
+                                                        } else {
+                                                            toast({ title: 'Upload Failed', description: result.error, variant: 'destructive' });
+                                                        }
+                                                        setUploadingIndex(null);
+                                                        e.target.value = '';
+                                                    }}
+                                                />
+                                            </label>
+                                        </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-2">
@@ -710,27 +827,50 @@ export function HomeContent() {
                                                             {img ? (
                                                                 <img src={img} alt="Preview" className="h-full w-full object-contain" />
                                                             ) : (
-                                                                <span className="text-[10px] text-muted-foreground font-medium">No Image</span>
+                                                                <ImageIcon className="h-6 w-6 text-muted-foreground/30" />
                                                             )}
                                                         </div>
-                                                        <Input
-                                                            value={img}
-                                                            onChange={(e) => {
-                                                                const newImages = [...set.images];
-                                                                newImages[imgIndex] = e.target.value;
-                                                                setHomeData(prev => ({
-                                                                    ...prev,
-                                                                    specialOffers: {
-                                                                        ...prev.specialOffers,
-                                                                        offerSets: prev.specialOffers.offerSets.map((s, i) =>
-                                                                            i === setIndex ? { ...s, images: newImages } : s
-                                                                        )
+                                                        <label
+                                                            className={`flex items-center justify-center gap-1.5 h-8 md:h-9 px-3 rounded-xl border border-secondary/20 bg-white cursor-pointer hover:bg-primary/5 hover:border-primary/30 transition-all text-[10px] md:text-xs font-bold ${
+                                                                uploadingIndex === `offer-${setIndex}-${imgIndex}` ? 'opacity-50 pointer-events-none' : ''
+                                                            }`}
+                                                        >
+                                                            {uploadingIndex === `offer-${setIndex}-${imgIndex}` ? (
+                                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                                            ) : (
+                                                                <Upload className="h-3 w-3" />
+                                                            )}
+                                                            {uploadingIndex === `offer-${setIndex}-${imgIndex}` ? 'Uploading...' : 'Upload'}
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                className="hidden"
+                                                                onChange={async (e) => {
+                                                                    const file = e.target.files?.[0];
+                                                                    if (!file) return;
+                                                                    setUploadingIndex(`offer-${setIndex}-${imgIndex}`);
+                                                                    const result = await uploadContentImage(file);
+                                                                    if (result.success) {
+                                                                        const newImages = [...set.images];
+                                                                        newImages[imgIndex] = result.url;
+                                                                        setHomeData(prev => ({
+                                                                            ...prev,
+                                                                            specialOffers: {
+                                                                                ...prev.specialOffers,
+                                                                                offerSets: prev.specialOffers.offerSets.map((s, i) =>
+                                                                                    i === setIndex ? { ...s, images: newImages } : s
+                                                                                )
+                                                                            }
+                                                                        }));
+                                                                        toast({ title: 'Image Uploaded', description: 'Offer image updated.' });
+                                                                    } else {
+                                                                        toast({ title: 'Upload Failed', description: result.error, variant: 'destructive' });
                                                                     }
-                                                                }));
-                                                            }}
-                                                            placeholder="/assets/..."
-                                                            className="h-8 md:h-9 text-[10px] md:text-xs bg-white"
-                                                        />
+                                                                    setUploadingIndex(null);
+                                                                    e.target.value = '';
+                                                                }}
+                                                            />
+                                                        </label>
                                                     </div>
                                                 </div>
                                             ))}

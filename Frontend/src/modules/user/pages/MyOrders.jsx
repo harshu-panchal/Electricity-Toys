@@ -17,6 +17,7 @@ export function MyOrders() {
     const [returnModal, setReturnModal] = useState({ open: false, order: null });
     const [cancelReason, setCancelReason] = useState('');
     const [returnReason, setReturnReason] = useState('');
+    const [returnOtherText, setReturnOtherText] = useState('');
     const [refundDetails, setRefundDetails] = useState({
         refundMethod: 'Bank Transfer',
         bankName: '',
@@ -90,12 +91,22 @@ export function MyOrders() {
             return;
         }
 
-        const result = await requestReturn(returnModal.order.id, returnReason, refundDetails);
+        let finalReason = returnReason;
+        if (returnReason === 'Other') {
+            if (!returnOtherText.trim()) {
+                toast({ title: "Error", description: "Please enter your return reason", variant: "destructive" });
+                return;
+            }
+            finalReason = `Other: ${returnOtherText.trim()}`;
+        }
+
+        const result = await requestReturn(returnModal.order.id, finalReason, refundDetails);
 
         if (result.success) {
             toast({ title: "Success", description: result.message, variant: "success" });
             setReturnModal({ open: false, order: null });
             setReturnReason('');
+            setReturnOtherText('');
         } else {
             toast({ title: "Error", description: result.message, variant: "destructive" });
         }
@@ -488,7 +499,7 @@ export function MyOrders() {
                                         Reason for Return *
                                     </label>
                                     <div className="space-y-3">
-                                        {['Wrong Product Delivered', 'Defective / Damaged Product'].map((reason) => (
+                                        {['Wrong Product Delivered', 'Defective / Damaged Product', 'Other'].map((reason) => (
                                             <button
                                                 key={reason}
                                                 onClick={() => setReturnReason(reason)}
@@ -500,6 +511,14 @@ export function MyOrders() {
                                                 {reason}
                                             </button>
                                         ))}
+                                        {returnReason === 'Other' && (
+                                            <textarea
+                                                value={returnOtherText}
+                                                onChange={(e) => setReturnOtherText(e.target.value)}
+                                                placeholder="Please describe your reason for return..."
+                                                className="w-full h-24 bg-secondary/10 border border-secondary/20 rounded-xl p-4 outline-none focus:ring-2 focus:ring-primary/20 text-sm resize-none"
+                                            />
+                                        )}
                                     </div>
                                 </div>
 

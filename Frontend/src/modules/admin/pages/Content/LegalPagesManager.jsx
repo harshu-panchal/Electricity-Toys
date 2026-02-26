@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useContentStore } from '../../store/adminContentStore';
 import { Button } from '../../../user/components/ui/button';
+import { useToast } from '../../../user/components/Toast';
 import { Save, FileText, Calendar, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
 export default function LegalPagesManager() {
     const { content, updatePageContent, fetchPageContent, loading } = useContentStore();
+    const { toast } = useToast();
     const legalPages = content.legalPages || {};
     const [activeTab, setActiveTab] = useState('privacyPolicy');
     const [formData, setFormData] = useState({
@@ -28,20 +30,35 @@ export default function LegalPagesManager() {
     }, [activeTab, legalPages]);
 
     const handleSave = async () => {
+        const currentDate = new Date().toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
+        });
+
         const updatedLegalPages = {
             ...legalPages,
             [activeTab]: {
                 ...legalPages[activeTab],
                 content: formData.content,
-                lastUpdated: formData.lastUpdated
+                lastUpdated: currentDate
             }
         };
 
         const result = await updatePageContent('legalPages', updatedLegalPages);
         if (result.success) {
-            alert('Legal pages updated successfully!');
+            toast({
+                title: "CONTENT UPDATED",
+                description: `Legal pages updated successfully for ${activeTab}. Version: ${currentDate}`,
+            });
+            // Update local form state to show the new date
+            setFormData(prev => ({ ...prev, lastUpdated: currentDate }));
         } else {
-            alert('Failed to update: ' + result.error);
+            toast({
+                title: "UPDATE FAILED",
+                description: result.error || "Failed to update content",
+                variant: "destructive"
+            });
         }
     };
 
@@ -97,14 +114,14 @@ export default function LegalPagesManager() {
                 <div className="grid grid-cols-1 gap-6">
                     <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-2 flex items-center gap-2">
-                            <Calendar className="h-3 w-3" /> Last Updated Date
+                            <Calendar className="h-3 w-3" /> Last Updated Date (Auto-updates on Save)
                         </label>
                         <input
                             type="text"
-                            value={formData.lastUpdated}
-                            onChange={(e) => setFormData({ ...formData, lastUpdated: e.target.value })}
-                            className="w-full bg-secondary/5 border border-secondary/20 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold text-sm"
-                            placeholder="e.g. January 20, 2026"
+                            value={formData.lastUpdated || 'Not Set'}
+                            readOnly
+                            className="w-full bg-secondary/10 border border-secondary/20 rounded-xl px-4 py-3 outline-none cursor-not-allowed opacity-70 font-bold text-sm text-muted-foreground"
+                            placeholder="Current version date..."
                         />
                     </div>
 

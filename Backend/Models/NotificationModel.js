@@ -27,6 +27,26 @@ const notificationSchema = new mongoose.Schema(
         isAdmin: { // For admin notifications
             type: Boolean,
             default: false
+        },
+        isDeleted: {
+            type: Boolean,
+            default: false
+        },
+        isBroadcastHistory: { // For shared global messages
+            type: Boolean,
+            default: false
+        },
+        readBy: [{ // Users who have read this global notification
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }],
+        deletedBy: [{ // Users who have deleted this global notification
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }],
+        referenceId: { // To link to orders, products, etc.
+            type: String,
+            required: false
         }
     },
     {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingBag, BarChart2, User, Bell, LogOut, Layout, FileText, Info, Phone, Play, Home, Tag, Scale, MessageSquare, Truck } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, BarChart2, User, Bell, LogOut, Layout, FileText, Info, Phone, Play, Home, Tag, Scale, MessageSquare, Truck, IndianRupee } from 'lucide-react';
 import { cn } from "../../../lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../../user/components/ui/sheet';
 import { useAdminAuthStore } from '../store/adminAuthStore';
@@ -14,6 +14,7 @@ export function Sidebar({ isOpen, onClose, onLogout }) {
         { name: 'ORDERS', icon: ShoppingBag, path: '/admin/orders' },
         { name: 'SHIPPING', icon: Truck, path: '/admin/shipping' },
         { name: 'ANALYTICS', icon: BarChart2, path: '/admin/analytics' },
+        { name: 'FINANCE', icon: IndianRupee, path: '/admin/finance' },
         { name: 'USERS', icon: User, path: '/admin/users' },
         {
             name: 'CONTENT MANAGEMENT',

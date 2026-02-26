@@ -5,9 +5,11 @@ import { Button } from '../components/ui/button';
 import { cn } from '@/lib/utils';
 import { useNotificationStore } from '../store/notificationStore';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 const NotificationItem = ({ notification, onMarkRead, onDelete }) => {
     const isUnread = !notification.isRead;
+    const navigate = useNavigate();
 
     const getIcon = () => {
         switch (notification.type) {
@@ -18,13 +20,21 @@ const NotificationItem = ({ notification, onMarkRead, onDelete }) => {
         }
     };
 
+    const handleClick = () => {
+        if (isUnread) onMarkRead(notification._id);
+        if (notification.type === 'order' && notification.referenceId) {
+            navigate('/orders'); // Navigate to user's orders page
+        }
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, x: -20 }}
+            onClick={handleClick}
             className={cn(
-                "group relative overflow-hidden rounded-xl border p-4 transition-all duration-300",
+                "group relative overflow-hidden rounded-xl border p-4 transition-all duration-300 cursor-pointer",
                 isUnread
                     ? "bg-primary/5 border-primary/20 hover:border-primary/40"
                     : "bg-card border-border/40 hover:border-border"
@@ -61,7 +71,10 @@ const NotificationItem = ({ notification, onMarkRead, onDelete }) => {
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => onMarkRead(notification._id)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onMarkRead(notification._id);
+                                }}
                                 className="h-7 text-[10px] px-3 hover:bg-primary/10 hover:text-primary"
                             >
                                 <Check className="w-3 h-3 mr-1" />
@@ -71,7 +84,10 @@ const NotificationItem = ({ notification, onMarkRead, onDelete }) => {
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => onDelete(notification._id)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(notification._id);
+                            }}
                             className="h-7 text-[10px] px-3 hover:bg-destructive/10 hover:text-destructive text-muted-foreground/50"
                         >
                             <Trash2 className="w-3 h-3 mr-1" />
@@ -89,10 +105,8 @@ const NotificationItem = ({ notification, onMarkRead, onDelete }) => {
 };
 
 const Notifications = () => {
-    const { notifications, loading, fetchNotifications, markAsRead, deleteNotification } = useNotificationStore();
+    const { notifications, loading, clearing, fetchNotifications, markAsRead, deleteNotification, clearAll } = useNotificationStore();
 
-    // Initial fetch if empty? Or just rely on App.jsx? 
-    // Better to fetch on mount to be sure
     useEffect(() => {
         fetchNotifications();
     }, [fetchNotifications]);
@@ -117,6 +131,16 @@ const Notifications = () => {
                             Stay updated with your orders and alerts
                         </p>
                     </div>
+                    {notifications.length > 0 && (
+                        <Button
+                            onClick={clearAll}
+                            disabled={clearing}
+                            className="rounded-full h-9 px-4 font-black italic tracking-widest uppercase"
+                            variant="outline"
+                        >
+                            {clearing ? "Clearing..." : "Clear All"}
+                        </Button>
+                    )}
                 </div>
 
                 <div className="space-y-4">

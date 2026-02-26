@@ -5,11 +5,12 @@ import api from '../../../lib/axios'; // Use shared axios instance
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Heart, Star, Shield, Truck, Minus, Plus, Zap } from 'lucide-react';
-import { optimizeImageUrl, buildSrcSet } from '../../../lib/utils';
+import { ShoppingCart, Heart, Star, Shield, Truck, Minus, Plus, Zap, Share2 } from 'lucide-react';
+import { optimizeImageUrl, buildSrcSet, getAppBaseUrl } from '../../../lib/utils';
 import { useCartStore } from '../store/cartStore';
 import { useWishlistStore } from '../store/wishlistStore';
 import { ProductReviews } from '../components/ProductReviews';
+import { useToast } from '../components/Toast';
 
 export function ProductDetail() {
     const { id } = useParams();
@@ -27,6 +28,7 @@ export function ProductDetail() {
     const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
     // Note: This checks local wishlist store which might use ID string or number. Ensure consistency.
     const isInWishlist = useWishlistStore((state) => state.isInWishlist(id));
+    const { toast } = useToast();
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -317,6 +319,34 @@ export function ProductDetail() {
                                     onClick={() => toggleWishlist(product)}
                                 >
                                     <Heart className={isInWishlist ? "fill-primary text-primary" : ""} />
+                                </Button>
+                                
+                                <Button
+                                    variant="outline"
+                                    size="lg"
+                                    className="h-12 w-12 rounded-none border-2 border-primary/20 hover:border-primary flex-shrink-0"
+                                    onClick={async () => {
+                                        const base = getAppBaseUrl();
+                                        const url = `${base}/product/${product.id}`;
+                                        const title = product.name;
+                                        try {
+                                            if (navigator.share) {
+                                                await navigator.share({ title, url });
+                                            } else if (navigator.clipboard) {
+                                                await navigator.clipboard.writeText(url);
+                                            }
+                                            toast({ title: "Link shared", description: "Product link shared/copied." });
+                                        } catch {
+                                            try {
+                                                await navigator.clipboard.writeText(url);
+                                                toast({ title: "Link copied", description: "Product link copied to clipboard." });
+                                            } catch (err) {
+                                                console.error(err);
+                                            }
+                                        }
+                                    }}
+                                >
+                                    <Share2 className="h-4 w-4" />
                                 </Button>
                             </div>
                         </div>

@@ -379,6 +379,24 @@ export const useContentStore = create(
           },
         })),
 
+      // Upload content image to Cloudinary
+      uploadContentImage: async (file) => {
+        try {
+          const formData = new FormData();
+          formData.append("image", file);
+          const response = await api.post("/content/upload/image", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+          if (response.data.success) {
+            return { success: true, url: response.data.url };
+          }
+          return { success: false, error: "Upload failed" };
+        } catch (error) {
+          console.error("Failed to upload content image:", error);
+          return { success: false, error: error.response?.data?.message || error.message };
+        }
+      },
+
       // Reset to defaults
       resetToDefaults: () => set({ content: defaultContent }),
 

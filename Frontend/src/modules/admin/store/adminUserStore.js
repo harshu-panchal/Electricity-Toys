@@ -85,6 +85,27 @@ export const useAdminUserStore = create(
         } finally {
           set({ loading: false });
         }
+      },
+
+      toggleUserStatus: async (id) => {
+        try {
+          const resp = await api.patch(`/admin/users/${id}/toggle-status`);
+          if (resp.data.success) {
+            // Update local state for the user list
+            set((state) => ({
+              users: state.users.map((u) =>
+                u.id === id ? { ...u, status: resp.data.isActive ? "Active" : "Inactive", isActive: resp.data.isActive } : u
+              ),
+              // If the current detail view is for this user, update it too
+              selectedUser: state.selectedUser?.id === id
+                ? { ...state.selectedUser, status: resp.data.isActive ? "Active" : "Inactive", isActive: resp.data.isActive }
+                : state.selectedUser
+            }));
+            return { success: true, message: resp.data.message };
+          }
+        } catch (error) {
+          return { success: false, message: error.response?.data?.message || error.message };
+        }
       }
     }),
     {

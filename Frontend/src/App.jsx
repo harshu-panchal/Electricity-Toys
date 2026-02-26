@@ -28,7 +28,7 @@ import PrivacyPolicy from './modules/user/pages/PrivacyPolicy';
 import TermsOfService from './modules/user/pages/TermsOfService';
 import RefundPolicy from './modules/user/pages/RefundPolicy';
 import { Profile as UserProfile } from './modules/user/pages/Profile';
-import { ToastManager } from './modules/user/components/Toast';
+import { ToastManager, useToast } from './modules/user/components/Toast';
 import ScrollToTop from './components/ScrollToTop';
 
 // Module: Admin Pages
@@ -40,6 +40,7 @@ import OrderList from './modules/admin/pages/Orders/OrderList';
 import OrderDetail from './modules/admin/pages/Orders/OrderDetail';
 import ShippingSettings from './modules/admin/pages/ShippingSettings';
 import Analytics from './modules/admin/pages/Analytics';
+import Finance from './modules/admin/pages/Finance';
 import Profile from './modules/admin/pages/Profile';
 import Notifications from './modules/admin/pages/Notifications';
 import AdminLogin from './modules/admin/pages/Auth/AdminLogin';
@@ -111,40 +112,58 @@ const PublicAdminRoute = ({ children }) => {
   return children;
 };
 
+
+const GlobalSocketListener = () => {
+    const { isAuthenticated, user, logout } = useAuthStore();
+    const { addNotification, fetchNotifications } = useNotificationStore();
+    const { toast } = useToast();
+
+    React.useEffect(() => {
+        if (isAuthenticated && user?._id) {
+            if (!socket.connected) {
+                socket.connect();
+            }
+
+            socket.emit("join", user._id);
+            fetchNotifications();
+
+            const handleNotification = (data) => {
+                addNotification(data);
+            };
+
+            const handleForceLogout = (data) => {
+                toast({
+                    title: "Account Deactivated",
+                    description: data.message || "Your account has been deactivated by admin.",
+                    variant: "destructive",
+                    duration: 10000
+                });
+                logout();
+            };
+
+            socket.on("notification", handleNotification);
+            socket.on("force-logout", handleForceLogout);
+
+            return () => {
+                socket.off("notification", handleNotification);
+                socket.off("force-logout", handleForceLogout);
+            };
+        } else {
+            if (socket.connected) {
+                socket.disconnect();
+            }
+        }
+    }, [isAuthenticated, user, addNotification, fetchNotifications, logout, toast]);
+
+    return null;
+};
+
 function App() {
-  const { isAuthenticated, user } = useAuthStore();
-  const { addNotification, fetchNotifications } = useNotificationStore();
-
-  React.useEffect(() => {
-    if (isAuthenticated && user?._id) {
-      // Only connect if not already connected (or check logic)
-      // socket.io-client auto-reconnects, but we need to ensure 'join'
-      if (!socket.connected) {
-        socket.connect();
-      }
-
-      socket.emit("join", user._id);
-      fetchNotifications();
-
-      const handleNotification = (data) => {
-        addNotification(data);
-        // You could add a toast here
-      };
-
-      socket.on("notification", handleNotification);
-
-      return () => {
-        socket.off("notification", handleNotification);
-      };
-    } else {
-      if (socket.connected) {
-        socket.disconnect();
-      }
-    }
-  }, [isAuthenticated, user]);
+  
 
   return (
     <ToastManager>
+        <GlobalSocketListener />
       <Router>
         <ScrollToTop />
         <Routes>
@@ -172,6 +191,7 @@ function App() {
             <Route path="orders/:id" element={<OrderDetail />} />
             <Route path="shipping" element={<ShippingSettings />} />
             <Route path="analytics" element={<Analytics />} />
+            <Route path="finance" element={<Finance />} />
             <Route path="users" element={<UserList />} />
             <Route path="users/:id" element={<UserDetail />} />
 

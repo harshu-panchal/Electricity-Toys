@@ -4,9 +4,15 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ShoppingCart, Star, Share2, Heart } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
+import { useWishlistStore } from '../store/wishlistStore';
+import { useToast } from './Toast';
+import { getAppBaseUrl } from '@/lib/utils';
 
 export function QuickView({ product, open, onOpenChange }) {
     const addItem = useCartStore((state) => state.addItem);
+    const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
+    const isInWishlist = useWishlistStore((state) => state.isInWishlist);
+    const { toast } = useToast();
 
     if (!product) return null;
 
@@ -37,8 +43,57 @@ export function QuickView({ product, open, onOpenChange }) {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="ghost" size="icon" className="rounded-full bg-secondary/50"><Heart className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" className="rounded-full bg-secondary/50"><Share2 className="h-4 w-4" /></Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className={`rounded-full bg-secondary/50 ${isInWishlist(product.id) ? 'text-pink-500' : ''}`}
+                                    onClick={() => {
+                                        const wasInWishlist = isInWishlist(product.id);
+                                        const normalized = {
+                                            id: product.id,
+                                            name: product.name,
+                                            price: product.price,
+                                            originalPrice: product.originalPrice,
+                                            image: product.image,
+                                            category: product.category,
+                                            rating: product.rating || 0,
+                                            numReviews: product.numReviews || 0,
+                                            description: product.description
+                                        };
+                                        toggleWishlist(normalized);
+                                        toast({
+                                            title: wasInWishlist ? "Removed from wishlist" : "Added to wishlist",
+                                            description: normalized.name
+                                        });
+                                    }}
+                                >
+                                    <Heart className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="rounded-full bg-secondary/50"
+                                    onClick={async () => {
+                                        const base = getAppBaseUrl();
+                                        const url = `${base}/product/${product.id}`;
+                                        const title = product.name;
+                                        try {
+                                            if (navigator.share) {
+                                                await navigator.share({ title, url });
+                                            } else if (navigator.clipboard) {
+                                                await navigator.clipboard.writeText(url);
+                                            }
+                                            toast({ title: "Link shared", description: "URL copied or shared successfully." });
+                                        } catch {
+                                            try {
+                                                await navigator.clipboard.writeText(url);
+                                                toast({ title: "Link copied", description: "Product link copied to clipboard." });
+                                            } catch (err) { console.error(err); }
+                                        }
+                                    }}
+                                >
+                                    <Share2 className="h-4 w-4" />
+                                </Button>
                             </div>
                         </div>
 

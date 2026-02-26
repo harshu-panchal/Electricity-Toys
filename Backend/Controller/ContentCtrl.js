@@ -1,4 +1,5 @@
 import Content from "../Models/ContentModel.js";
+import { uploadToCloudinary } from "../Cloudinary/CloudinaryHelper.js";
 
 // ================= GET PAGE CONTENT =================
 export const getContent = async (req, res) => {
@@ -51,6 +52,31 @@ export const updateContent = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in updateContent:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ================= UPLOAD CONTENT IMAGE =================
+export const uploadContentImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No image file provided" });
+    }
+
+    const result = await uploadToCloudinary(req.file.buffer, "electritoys-content");
+
+    if (!result.success) {
+      return res.status(500).json({ success: false, message: "Image upload failed" });
+    }
+
+    res.json({
+      success: true,
+      url: result.url,
+      public_id: result.public_id,
+      message: "Image uploaded successfully",
+    });
+  } catch (error) {
+    console.error("Error in uploadContentImage:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

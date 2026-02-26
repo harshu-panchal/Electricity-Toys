@@ -453,10 +453,7 @@ export function Home() {
                       <span>• Verified</span>
                     </div>
                   </div>
-                  <button className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest mt-auto mb-1 hover:text-white/80 transition-colors bg-white/20 dark:bg-black/20 px-4 py-2 rounded-full backdrop-blur-sm">
-                    <LucideIcons.Flower2 className="w-3 h-3" />
-                    More
-                  </button>
+                  {/* More button removed as requested */}
                 </div>
 
                 {/* Reflection Shadow Effect */}

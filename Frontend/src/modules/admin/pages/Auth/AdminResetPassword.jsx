@@ -13,7 +13,8 @@ export default function AdminResetPassword() {
     const { resetPassword } = useAdminAuthStore();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [formData, setFormData] = useState({
         email: location.state?.email || '',
         otp: location.state?.otp || '',
@@ -67,6 +68,8 @@ export default function AdminResetPassword() {
                 variant: "destructive",
             });
         } finally {
+            setShowNewPassword(false);
+            setShowConfirmPassword(false);
             setIsLoading(false);
         }
     };
@@ -97,7 +100,7 @@ export default function AdminResetPassword() {
                                 <div className="relative">
                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                     <Input
-                                        type={showPassword ? "text" : "password"}
+                                        type={showNewPassword ? "text" : "password"}
                                         placeholder="••••••••"
                                         value={formData.newPassword}
                                         onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
@@ -106,10 +109,10 @@ export default function AdminResetPassword() {
                                     />
                                     <button
                                         type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
+                                        onClick={() => setShowNewPassword(!showNewPassword)}
                                         className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                     >
-                                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
                                 </div>
                             </div>
@@ -119,13 +122,20 @@ export default function AdminResetPassword() {
                                 <div className="relative">
                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                     <Input
-                                        type={showPassword ? "text" : "password"}
+                                        type={showConfirmPassword ? "text" : "password"}
                                         placeholder="••••••••"
                                         value={formData.confirmPassword}
                                         onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                        className="h-12 pl-12 rounded-2xl bg-secondary/10 border-secondary/20 focus:border-primary/50 text-sm font-bold"
+                                        className="h-12 pl-12 pr-12 rounded-2xl bg-secondary/10 border-secondary/20 focus:border-primary/50 text-sm font-bold"
                                         required
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
                                 </div>
                             </div>
 

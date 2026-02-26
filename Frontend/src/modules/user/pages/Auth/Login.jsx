@@ -1,16 +1,35 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Check, ArrowRight } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import { useToast } from "../../components/Toast";
+import { cn } from "@/lib/utils";
 
 export function Login() {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    rememberMe: false,
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Load saved credentials on mount
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("rememberedEmail");
+    const savedPassword = localStorage.getItem("rememberedPassword");
+    if (savedEmail && savedPassword) {
+      setFormData((prev) => ({
+        ...prev,
+        email: savedEmail,
+        password: savedPassword,
+        rememberMe: true,
+      }));
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,6 +39,15 @@ export function Login() {
       const result = await login(formData.email, formData.password);
 
       if (result.success) {
+        // Handle Remember Me logic
+        if (formData.rememberMe) {
+          localStorage.setItem("rememberedEmail", formData.email);
+          localStorage.setItem("rememberedPassword", formData.password);
+        } else {
+          localStorage.removeItem("rememberedEmail");
+          localStorage.removeItem("rememberedPassword");
+        }
+
         toast({
           title: "WELCOME BACK!",
           description: "Login successful.",
@@ -108,11 +136,23 @@ export function Login() {
             </div>
 
             <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div className="w-5 h-5 rounded border border-border flex items-center justify-center transition-colors group-hover:border-primary">
-                  <Check className="w-3 h-3 text-primary opacity-0 group-hover:opacity-100" />
+              <label 
+                className="flex items-center gap-3 cursor-pointer group"
+                onClick={() => setFormData({ ...formData, rememberMe: !formData.rememberMe })}
+              >
+                <div className={cn(
+                  "w-5 h-5 rounded border flex items-center justify-center transition-all duration-300",
+                  formData.rememberMe ? "bg-primary border-primary shadow-glow" : "border-border group-hover:border-primary"
+                )}>
+                  <Check className={cn(
+                    "w-3 h-3 text-primary-foreground transition-all duration-300",
+                    formData.rememberMe ? "opacity-100 scale-100" : "opacity-0 scale-50"
+                  )} />
                 </div>
-                <span className="text-sm text-muted-foreground select-none group-hover:text-foreground">
+                <span className={cn(
+                  "text-sm select-none transition-colors",
+                  formData.rememberMe ? "text-foreground font-semibold" : "text-muted-foreground group-hover:text-foreground"
+                )}>
                   Remember me
                 </span>
               </label>

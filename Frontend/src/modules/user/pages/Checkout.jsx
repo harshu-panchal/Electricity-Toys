@@ -56,13 +56,13 @@ export function Checkout() {
   const [formData, setFormData] = useState({
     fullName: user?.fullName || user?.name || "",
     email: user?.email || "",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
+    phone: user?.phone || "",
+    address: user?.address || "",
+    city: user?.city || "",
+    state: user?.state || "",
     country: "India",
-    zipCode: "",
-    paymentMethod: "cod",
+    zipCode: user?.zipCode || "",
+    paymentMethod: "card",
   });
 
   const [useSavedAddress, setUseSavedAddress] = useState(false);
@@ -107,6 +107,26 @@ export function Checkout() {
     fetchShippingInfo();
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+    const name = user.fullName || user.name || "";
+    const { email, phone, address, city, state, zipCode } = user;
+    const complete =
+      !!name && !!email && !!phone && !!address && !!city && !!state && !!zipCode;
+    if (complete) {
+      setUseSavedAddress(true);
+      setFormData((prev) => ({
+        ...prev,
+        fullName: name,
+        email: email || "",
+        phone: phone || "",
+        address: address || "",
+        city: city || "",
+        state: state || "",
+        zipCode: zipCode || "",
+      }));
+    }
+  }, [user]);
   const calculateShipping = React.useCallback(async () => {
     const cartTotal = getTotalPrice();
 

@@ -49,12 +49,17 @@ export const getAdminUserById = async (req, res) => {
     }
 
     const orders = await Order.find({ userId: id })
-      .select("grandTotal paymentStatus createdAt orderStatus products")
+      .select("grandTotal totalAmount paymentStatus createdAt orderStatus products cancelApprovedByAdmin returnApprovedByAdmin")
       .sort({ createdAt: -1 })
       .lean();
 
     const orderCount = orders.length;
-    const totalSpending = orders.reduce((sum, o) => sum + (Number(o.grandTotal) || 0), 0);
+    
+    // Only count spending from non-cancelled orders
+    const activeOrders = orders.filter(o => o.orderStatus !== "cancelled");
+    const totalSpending = activeOrders.reduce((sum, o) => sum + (Number(o.grandTotal) || 0), 0);
+    const activeOrderCount = activeOrders.length;
+    const cancelledOrderCount = orders.filter(o => o.orderStatus === "cancelled").length;
 
     const wishlistCount = await Wishlist.countDocuments({ userId: id });
 
@@ -70,10 +75,42 @@ export const getAdminUserById = async (req, res) => {
       orders,
       metrics: {
         orderCount,
+        activeOrderCount,
+        cancelledOrderCount,
         totalSpending,
         wishlistCount,
         cartCount: cartItemsCount,
       },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const toggleUserStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ success: false, message: "Invalid user id" });
+    }
+
+    const user = await User.findById(id);
+    if (!user || user.isDeleted || user.role === "admin") {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    user.isActive = !user.isActive;
+    await user.save();
+
+    // If deactivated, force logout via socket
+    if (!user.isActive && req.io) {
+      req.io.to(id).emit("force-logout", { message: "Your account has been deactivated by admin." });
+    }
+
+    res.json({
+      success: true,
+      message: `User ${user.isActive ? "activated" : "deactivated"} successfully`,
+      isActive: user.isActive,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

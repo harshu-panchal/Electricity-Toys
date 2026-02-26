@@ -54,8 +54,9 @@ export const getDashboard = async (req, res) => {
       }))
     }));
 
-    // Best Selling Products
+    // Best Selling Products (exclude cancelled orders)
     const bestSelling = await OrderModel.aggregate([
+      { $match: { orderStatus: { $ne: "cancelled" } } },
       { $unwind: "$products" },
       {
         $group: {

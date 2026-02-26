@@ -1,31 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAdminAuthStore } from '../../store/adminAuthStore';
 import { Button } from '../../../user/components/ui/button';
 import { Input } from '../../../user/components/ui/input';
 import { useToast } from '../../../user/components/Toast';
-import { Loader2, ArrowRight, Store } from 'lucide-react';
+import { Loader2, ArrowRight, Store, Eye, EyeOff, Check } from 'lucide-react';
+import { cn } from "@/lib/utils";
 
 export default function AdminLogin() {
     const navigate = useNavigate();
     const { login } = useAdminAuthStore();
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
         password: '',
+        rememberMe: false,
     });
+
+    // Load saved admin credentials on mount
+    useEffect(() => {
+        const savedEmail = localStorage.getItem("rememberedAdminEmail");
+        const savedPassword = localStorage.getItem("rememberedAdminPassword");
+        if (savedEmail && savedPassword) {
+            setFormData((prev) => ({
+                ...prev,
+                email: savedEmail,
+                password: savedPassword,
+                rememberMe: true,
+            }));
+        }
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
 
         try {
-            // Calling login but it essentially acts as "Enter Hub" (auto-register if new)
             const result = await login(formData.email, formData.password);
 
             if (result.success) {
+                // Handle Remember Me logic
+                if (formData.rememberMe) {
+                    localStorage.setItem("rememberedAdminEmail", formData.email);
+                    localStorage.setItem("rememberedAdminPassword", formData.password);
+                } else {
+                    localStorage.removeItem("rememberedAdminEmail");
+                    localStorage.removeItem("rememberedAdminPassword");
+                }
+
                 toast({
                     title: "Welcome, Partner!",
                     description: "Access granted to admin hub.",
@@ -91,20 +116,49 @@ export default function AdminLogin() {
 
                             <div className="space-y-2">
                                 <label className="text-xs font-black uppercase tracking-widest pl-4">Password</label>
-                                <Input
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={formData.password}
-                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                    className="h-12 rounded-2xl bg-secondary/10 border-secondary/20 focus:border-primary/50 text-sm font-bold"
-                                    required
-                                />
+                                <div className="relative group/pass">
+                                    <Input
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="••••••••"
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        className="h-12 rounded-2xl bg-secondary/10 border-secondary/20 focus:border-primary/50 text-sm font-bold pr-12 transition-all"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-primary/10 rounded-lg text-muted-foreground hover:text-primary transition-all"
+                                    >
+                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
                             </div>
 
-                            <div className="flex justify-end p-1">
+                            <div className="flex items-center justify-between p-1">
+                                <label 
+                                    className="flex items-center gap-2 cursor-pointer group"
+                                    onClick={() => setFormData({ ...formData, rememberMe: !formData.rememberMe })}
+                                >
+                                    <div className={cn(
+                                        "w-4 h-4 rounded border flex items-center justify-center transition-all duration-300",
+                                        formData.rememberMe ? "bg-primary border-primary shadow-glow" : "border-secondary/20 group-hover:border-primary"
+                                    )}>
+                                        <Check className={cn(
+                                            "w-2.5 h-2.5 text-primary-foreground transition-all duration-300",
+                                            formData.rememberMe ? "opacity-100 scale-100" : "opacity-0 scale-50"
+                                        )} />
+                                    </div>
+                                    <span className={cn(
+                                        "text-[10px] font-black uppercase tracking-widest transition-colors",
+                                        formData.rememberMe ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                                    )}>
+                                        Remember Me
+                                    </span>
+                                </label>
                                 <Link
                                     to="/admin/forgot-password"
-                                    className="text-xs font-black uppercase tracking-widest text-primary hover:text-primary/80 transition-colors"
+                                    className="text-[10px] font-black uppercase tracking-widest text-primary hover:text-primary/80 transition-colors"
                                 >
                                     Forgot Password?
                                 </Link>

@@ -126,18 +126,18 @@ export function Contact() {
                                 >
                                     <motion.div
                                         whileHover={{ scale: 1.1, rotate: 10 }}
-                                        className="w-14 h-14 rounded-2xl bg-secondary/30 dark:bg-secondary/10 flex items-center justify-center shrink-0 transition-all duration-300 group-hover:text-white group-hover:shadow-lg"
+                                        className="relative overflow-hidden w-14 h-14 rounded-2xl bg-secondary/30 dark:bg-secondary/10 flex items-center justify-center shrink-0 transition-all duration-300 group-hover:text-white group-hover:shadow-lg"
                                         style={{ color: THEME_COLOR }}
                                     // Dynamic style for hover bg is tricky inline, so we rely on group-hover with Tailwind arbitrary value for bg
                                     >
-                                        <div className="group-hover:hidden">
+                                        <div className="relative z-10 group-hover:hidden">
                                             <item.icon className="h-6 w-6" />
                                         </div>
-                                        <div className="hidden group-hover:block text-white z-10">
+                                        <div className="relative z-10 hidden group-hover:block text-white">
                                             <item.icon className="h-6 w-6" />
                                         </div>
                                         {/* Hover Background Layer */}
-                                        <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-0" style={{ backgroundColor: THEME_COLOR }} />
+                                        <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0" style={{ backgroundColor: THEME_COLOR }} />
                                     </motion.div>
                                     <div className="space-y-0.5">
                                         <h3 className="text-lg font-black italic tracking-tighter uppercase leading-none text-foreground">{item.title}</h3>

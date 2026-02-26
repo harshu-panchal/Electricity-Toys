@@ -20,6 +20,7 @@ import api from "../../../lib/axios";
 
 import { useAuthStore } from "../store/authStore";
 import { useNotificationStore } from "../store/notificationStore";
+import { useCartStore } from "../store/cartStore";
 import { useNavigate } from "react-router-dom";
 import { User, LogOut, Bell } from "lucide-react";
 import {
@@ -73,24 +74,86 @@ export function Header() {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
+  const debounceRef = React.useRef(null);
   const [mobileSearchExpanded, setMobileSearchExpanded] = React.useState(false);
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
+  const [isMenuStuck, setIsMenuStuck] = React.useState(false);
+  const userMenuTimer = React.useRef(null);
 
-  React.useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const openUserMenu = () => {
+    if (userMenuTimer.current) clearTimeout(userMenuTimer.current);
+    setIsUserMenuOpen(true);
+  };
 
-  const handleSearch = (e) => {
-    if (e.key === "Enter" && searchQuery.trim()) {
-      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery(""); // Optional: clear search after navigating
+  const closeUserMenu = () => {
+    if (!isMenuStuck) {
+      userMenuTimer.current = setTimeout(() => {
+        setIsUserMenuOpen(false);
+      }, 300); // Increased delay to prevent flickering
     }
   };
 
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+      if (isUserMenuOpen) {
+        setIsUserMenuOpen(false);
+        setIsMenuStuck(false);
+      }
+    };
+
+    // Track scroll for header styling regardless of menu state
+    const onScroll = () => setScrolled(window.scrollY > 20);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("wheel", handleScroll, { passive: true });
+    window.addEventListener("touchmove", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("wheel", handleScroll);
+      window.removeEventListener("touchmove", handleScroll);
+    };
+  }, [isUserMenuOpen]);
+
+  // Handle outside clicks to unlock menu
+  React.useEffect(() => {
+    if (!isMenuStuck) return;
+    const handleClickOutside = () => {
+      setIsMenuStuck(false);
+      setIsUserMenuOpen(false);
+    };
+    window.addEventListener("click", handleClickOutside);
+    return () => window.removeEventListener("click", handleClickOutside);
+  }, [isMenuStuck]);
+
+  const pushSearch = React.useCallback((value) => {
+    const q = value.trim();
+    const path = q ? `/products?search=${encodeURIComponent(q)}` : "/products";
+    if (window.location.pathname.startsWith("/products")) {
+      navigate(path, { replace: true });
+    } else if (q) {
+      navigate(path);
+    }
+  }, [navigate]);
+
+  const handleSearch = (e) => {
+    if (e.key === "Enter") {
+      pushSearch(searchQuery);
+      if (!window.location.pathname.startsWith("/products")) {
+        setSearchQuery("");
+      }
+    }
+  };
+
+  const clearCart = useCartStore((state) => state.clearCart);
+  const resetNotifications = useNotificationStore((state) => state.resetNotifications);
+
   const handleLogout = () => {
     logout();
+    clearCart();
+    resetNotifications();
     navigate("/");
   };
 
@@ -203,7 +266,13 @@ export function Header() {
                 type="text"
                 placeholder="SEARCH TOYS..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSearchQuery(val);
+                  // Live-filter on Products page with small debounce
+                  if (debounceRef.current) clearTimeout(debounceRef.current);
+                  debounceRef.current = setTimeout(() => pushSearch(val), 300);
+                }}
                 onKeyDown={handleSearch}
                 className="bg-transparent border-none outline-none text-[10px] font-bold tracking-widest px-3 w-full placeholder:text-muted-foreground/50"
               />
@@ -285,72 +354,95 @@ export function Header() {
               </motion.button>
 
               {isAuthenticated ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="relative h-8 w-8 md:h-10 md:w-10 rounded-full p-0 overflow-hidden border-2 border-primary/20 hover:border-primary transition-colors">
-                      <img
-                        src={
-                          user?.avatar ||
-                          "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
-                        }
-                        alt={user?.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    className="w-64 glass-dark border-white/10 mt-2"
-                    align="end"
-                    forceMount>
-                    <DropdownMenuLabel className="font-normal p-4">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-black italic tracking-tighter uppercase">
-                          {user?.name}
-                        </p>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
-                          {user?.email}
-                        </p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-white/10" />
-                    <div className="p-2 space-y-1">
-                      <DropdownMenuItem
-                        onClick={() => navigate("/profile")}
-                        className="rounded-lg font-black italic uppercase tracking-tighter focus:bg-primary focus:text-black">
-                        <User className="mr-3 h-4 w-4" />
-                        <span>Profile</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => navigate("/notifications")}
-                        className="rounded-lg font-black italic uppercase tracking-tighter focus:bg-primary focus:text-black">
-                        <Bell className="mr-3 h-4 w-4" />
-                        <span>Notifications</span>
-                        {unreadCount > 0 && (
-                          <span className="ml-auto bg-primary text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                            {unreadCount}
-                          </span>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => navigate("/orders")}
-                        className="rounded-lg font-black italic uppercase tracking-tighter focus:bg-primary focus:text-black">
-                        <ShoppingBag className="mr-3 h-4 w-4" />
-                        <span>My Orders</span>
-                      </DropdownMenuItem>
-                    </div>
-                    <DropdownMenuSeparator className="bg-white/10" />
-                    <div className="p-2">
-                      <DropdownMenuItem
-                        onClick={handleLogout}
-                        className="rounded-lg font-black italic uppercase tracking-tighter text-red-500 focus:bg-red-500 focus:text-white">
-                        <LogOut className="mr-3 h-4 w-4" />
-                        <span>Log out</span>
-                      </DropdownMenuItem>
-                    </div>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div
+                  className="relative flex items-center h-full"
+                  onMouseEnter={openUserMenu}
+                  onMouseLeave={closeUserMenu}
+                >
+                  <Button
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMenuStuck(!isMenuStuck);
+                      setIsUserMenuOpen(true);
+                    }}
+                    className={cn(
+                      "relative h-8 w-8 md:h-10 md:w-10 rounded-full p-0 overflow-hidden border-2 transition-all duration-300",
+                      isMenuStuck ? "border-primary shadow-glow scale-110" : "border-primary/20 hover:border-primary"
+                    )}>
+                    <img
+                      src={
+                        user?.avatar ||
+                        "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+                      }
+                      alt={user?.name}
+                      className="h-full w-full object-cover"
+                    />
+                  </Button>
+
+                  <AnimatePresence>
+                    {isUserMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute right-0 top-full mt-2 w-64 glass-dark border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 origin-top-right py-1"
+                      >
+                        <div className="p-4 border-b border-white/5">
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-black italic tracking-tighter uppercase text-white">
+                              {user?.name}
+                            </p>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
+                              {user?.email}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="p-2 space-y-1">
+                          <button
+                            onClick={() => {
+                              navigate("/profile");
+                              setIsUserMenuOpen(false);
+                              setIsMenuStuck(false);
+                            }}
+                            className="w-full flex items-center px-3 py-2.5 rounded-xl font-black italic uppercase tracking-tighter text-sm text-gray-300 hover:bg-primary hover:text-black transition-all group"
+                          >
+                            <User className="mr-3 h-4 w-4 group-hover:scale-110 transition-transform" />
+                            <span>Profile</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              navigate("/orders");
+                              setIsUserMenuOpen(false);
+                              setIsMenuStuck(false);
+                            }}
+                            className="w-full flex items-center px-3 py-2.5 rounded-xl font-black italic uppercase tracking-tighter text-sm text-gray-300 hover:bg-primary hover:text-black transition-all group"
+                          >
+                            <ShoppingBag className="mr-3 h-4 w-4 group-hover:scale-110 transition-transform" />
+                            <span>My Orders</span>
+                          </button>
+                        </div>
+
+                        <div className="p-2 border-t border-white/5 bg-white/5">
+                          <button
+                            onClick={() => {
+                              handleLogout();
+                              setIsUserMenuOpen(false);
+                              setIsMenuStuck(false);
+                            }}
+                            className="w-full flex items-center px-3 py-2.5 rounded-xl font-black italic uppercase tracking-tighter text-sm text-red-500 hover:bg-red-500 hover:text-white transition-all group"
+                          >
+                            <LogOut className="mr-3 h-4 w-4 group-hover:rotate-12 transition-transform" />
+                            <span>Log out</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               ) : (
                 <>
                   {/* Desktop Login Button */}
@@ -440,7 +532,7 @@ export function Footer() {
             </li>
             <li>
               <Link to="/about" className="hover:text-primary transition-all">
-                Our Story
+                About Us
               </Link>
             </li>
             <li>
@@ -502,21 +594,7 @@ export function Footer() {
         </div>
 
         <div className="space-y-4">
-          <h4 className="font-bold uppercase text-xs tracking-widest text-primary">
-            Newsletter
-          </h4>
-          <p className="text-xs text-gray-400">
-            Get updates on new releases and secret sales.
-          </p>
-          <div className="flex gap-2 justify-center md:justify-start">
-            <input
-              type="email"
-              placeholder="Your email"
-              className="bg-white/10 border border-white/10 rounded-lg px-3 py-2 text-xs flex-1 outline-none focus:ring-2 focus:ring-primary/20 text-white placeholder:text-gray-500"
-            />
-            <Button size="sm">JOIN</Button>
-          </div>
-          <div className="flex gap-4 pt-4 justify-center md:justify-start">
+          <div className="flex gap-4 pt-0 justify-center md:justify-start">
             <a
               href="https://maps.google.com/maps?q=28.46562385559082%2C77.01654815673828&z=17&hl=en"
               target="_blank"

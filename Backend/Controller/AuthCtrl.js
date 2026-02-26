@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { generateToken } from "../Helpers/generateToken.js";
 import { sendOTPEmail } from "../Helpers/SendMail.js";
+import { updateCloudinaryImage } from "../Cloudinary/CloudinaryHelper.js";
 
 // ================= REGISTER =================
 export const registerUser = async (req, res) => {
@@ -47,6 +48,44 @@ export const registerUser = async (req, res) => {
   }
 };
 
+// ================= UPDATE AVATAR =================
+export const updateAvatar = async (req, res) => {
+  try {
+    if (!req.file || !req.file.buffer) {
+      return res
+        .status(400)
+        .json({ success: false, message: "No image provided", data: null });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found", data: null });
+    }
+
+    const upload = await updateCloudinaryImage(
+      user.avatarPublicId,
+      req.file.buffer,
+      "electritoy/users"
+    );
+
+    user.avatar = upload.url;
+    user.avatarPublicId = upload.public_id;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Profile image updated",
+      data: user,
+      token: generateToken(user._id),
+    });
+  } catch (error) {
+    console.error("Update Avatar Error:", error);
+    res.status(500).json({ success: false, message: "Server error", data: null });
+  }
+};
+
 // ================= LOGIN =================
 export const loginUser = async (req, res) => {
   try {
@@ -55,7 +94,9 @@ export const loginUser = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user)
-      return res.status(400).json({ success: false, message: "Invalid credentials", data: null });
+      return res
+        .status(400)
+        .json({ success: false, message: "Email is not registered", data: null });
     // ... rest of login
     if (!user.isActive)
       return res.status(403).json({ success: false, message: "Account deactivated", data: null });

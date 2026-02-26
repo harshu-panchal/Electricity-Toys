@@ -15,6 +15,15 @@ export const AuthMiddleware = asyncHandler(async (req, res, next) => {
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
+
+    // Check account status
+    if (user.isDeleted) {
+      return res.status(401).json({ message: "Account deleted" });
+    }
+    if (!user.isActive) {
+      return res.status(401).json({ message: "Account deactivated" });
+    }
+
     req.user = user;
     next();
   } catch (error) {
@@ -34,7 +43,7 @@ export const isAdmin = asyncHandler(async (req, res, next) => {
   if (!user || user.role !== "admin") {
     return res.status(401).json({ message: "You are not an admin!" });
   }
-  
+
   next();
 });
 

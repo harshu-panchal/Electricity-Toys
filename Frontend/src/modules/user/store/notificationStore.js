@@ -5,6 +5,7 @@ export const useNotificationStore = create((set, get) => ({
     notifications: [],
     unreadCount: 0,
     loading: false,
+    clearing: false,
 
     fetchNotifications: async () => {
         set({ loading: true });
@@ -61,5 +62,23 @@ export const useNotificationStore = create((set, get) => ({
         } catch (error) {
             console.error("Delete notification error:", error);
         }
+    },
+
+    clearAll: async () => {
+        set({ clearing: true });
+        try {
+            // Optimistic clear
+            set({ notifications: [], unreadCount: 0 });
+            await api.delete('/notifications/clear-all');
+        } catch (error) {
+            console.error("Clear all notifications error:", error);
+            await get().fetchNotifications();
+        } finally {
+            set({ clearing: false });
+        }
+    },
+
+    resetNotifications: () => {
+        set({ notifications: [], unreadCount: 0 });
     }
 }));

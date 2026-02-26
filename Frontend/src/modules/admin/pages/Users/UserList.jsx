@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 
 export default function UserList() {
-  const { users, fetchUsers, page, limit } = useAdminUserStore();
+  const { users, fetchUsers, toggleUserStatus, page, limit } = useAdminUserStore();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -23,6 +23,10 @@ export default function UserList() {
   }, [users, searchQuery]);
 
   const onView = (id) => navigate(`/admin/users/${id}`);
+
+  const onToggleStatus = async (id) => {
+    await toggleUserStatus(id);
+  };
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8">
@@ -57,7 +61,6 @@ export default function UserList() {
                 <th className="px-4 py-3 md:px-6 md:py-4">Name</th>
                 <th className="px-4 py-3 md:px-6 md:py-4">Email</th>
                 <th className="px-4 py-3 md:px-6 md:py-4">Phone</th>
-                <th className="px-4 py-3 md:px-6 md:py-4">Role</th>
                 <th className="px-4 py-3 md:px-6 md:py-4">Registration Date</th>
                 <th className="px-4 py-3 md:px-6 md:py-4">Status</th>
                 <th className="px-4 py-3 md:px-6 md:py-4 text-right">Actions</th>
@@ -76,19 +79,19 @@ export default function UserList() {
                     <p className="text-[10px] text-primary font-black italic">{u.phone}</p>
                   </td>
                   <td className="px-4 py-3 md:px-6 md:py-4">
-                    <Badge variant="outline" className="text-[8px] md:text-[10px] uppercase tracking-widest">
-                      {u.role}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3 md:px-6 md:py-4">
                     <p className="text-[10px] md:text-xs font-medium uppercase tracking-widest text-muted-foreground">
                       {u.createdAt ? format(new Date(u.createdAt), 'MMM dd, yyyy') : '-'}
                     </p>
                   </td>
                   <td className="px-4 py-3 md:px-6 md:py-4">
-                    <Badge variant={u.status === 'Active' ? 'success' : 'secondary'} className="text-[8px] md:text-[10px] uppercase tracking-widest">
-                      {u.status}
-                    </Badge>
+                    <button
+                      onClick={() => onToggleStatus(u.id)}
+                      className="transition-transform active:scale-95"
+                    >
+                      <Badge variant={u.status === 'Active' ? 'success' : 'secondary'} className="text-[8px] md:text-[10px] uppercase tracking-widest cursor-pointer hover:opacity-80 transition-all">
+                        {u.status}
+                      </Badge>
+                    </button>
                   </td>
                   <td className="px-4 py-3 md:px-6 md:py-4 text-right">
                     <Button

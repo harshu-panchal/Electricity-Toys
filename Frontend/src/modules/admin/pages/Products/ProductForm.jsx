@@ -378,7 +378,7 @@ export default function ProductForm() {
                 required
                 rows={6}
                 placeholder="Tell us why this toy is awesome..."
-                className="w-full bg-background border border-secondary/20 rounded-xl md:rounded-2xl p-4 md:p-6 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium italic text-xs md:text-sm"
+                className="w-full bg-background/50 backdrop-blur-sm border border-input rounded-xl md:rounded-2xl p-4 md:p-6 outline-none focus:ring-2 focus:ring-primary/20 transition-all font-bold tracking-tight text-xs md:text-base placeholder:italic placeholder:font-medium"
               />
             </div>
 
@@ -391,17 +391,17 @@ export default function ProductForm() {
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="w-full h-10 md:h-14 bg-background border border-secondary/20 rounded-xl md:rounded-2xl px-4 md:px-6 font-bold uppercase tracking-widest text-[10px] md:text-xs flex items-center justify-between outline-none focus:ring-2 focus:ring-primary/20 transition-all">
+                      className="w-full h-10 md:h-14 bg-background/50 backdrop-blur-sm border border-input rounded-xl md:rounded-2xl px-4 md:px-6 font-bold uppercase tracking-widest text-[10px] md:text-sm flex items-center justify-between outline-none focus:ring-2 focus:ring-primary/20 transition-all">
                       <span
                         className={
                           !formData.category ? "text-muted-foreground" : ""
                         }>
                         {formData.category
                           ? (
-                              categories.find(
-                                (c) => (c._id || c) === formData.category,
-                              )?.categoryName || formData.category
-                            ).toUpperCase()
+                            categories.find(
+                              (c) => (c._id || c) === formData.category,
+                            )?.categoryName || formData.category
+                          ).toUpperCase()
                           : "SELECT CATEGORY"}
                       </span>
                       <ChevronDown className="h-4 w-4 opacity-50" />
@@ -456,7 +456,7 @@ export default function ProductForm() {
                   onValueChange={(val) =>
                     setFormData((prev) => ({ ...prev, status: val }))
                   }>
-                  <SelectTrigger className="w-full h-10 md:h-14 bg-background border border-secondary/20 rounded-xl md:rounded-2xl px-4 md:px-6 font-bold uppercase tracking-widest text-[10px] md:text-xs ring-offset-background placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all">
+                  <SelectTrigger className="w-full h-10 md:h-14 bg-background/50 backdrop-blur-sm border border-input rounded-xl md:rounded-2xl px-4 md:px-6 font-bold uppercase tracking-widest text-[10px] md:text-sm ring-offset-background placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-all">
                     <SelectValue placeholder="Select Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -573,13 +573,14 @@ export default function ProductForm() {
                       </div>
                     ) : (
                       <div
-                        className="w-full h-full rounded-lg border border-dashed border-secondary/40 flex items-center justify-center cursor-pointer hover:border-primary/50 bg-background/50 transition-colors"
+                        className="w-full h-full rounded-lg border border-dashed border-secondary/40 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 bg-background/50 transition-colors"
                         onClick={() =>
                           document
                             .getElementById(`variant-file-${index}`)
                             .click()
                         }>
-                        <Plus className="h-4 w-4 text-muted-foreground" />
+                        <Plus className="h-4 w-4 text-muted-foreground mb-1" />
+                        <span className="text-[7px] font-black uppercase tracking-tighter text-muted-foreground">Upload Image</span>
                       </div>
                     )}
                     <input

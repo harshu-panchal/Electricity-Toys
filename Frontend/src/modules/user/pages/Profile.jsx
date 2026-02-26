@@ -21,12 +21,14 @@ import {
 import { useToast } from '../components/Toast';
 
 export function Profile() {
-    const { user, updateProfile } = useAuthStore();
+    const { user, updateProfile, updateAvatar } = useAuthStore();
     const { orders, fetchOrders } = useOrderStore();
     const { items: wishlistItems, fetchWishlist } = useWishlistStore();
     const { toast } = useToast();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
+    const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+    const fileInputRef = React.useRef(null);
 
     const [formData, setFormData] = useState({
         name: user?.fullName || user?.name || '',
@@ -112,9 +114,37 @@ export function Profile() {
                                             </div>
                                         )}
                                     </div>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            setIsAvatarUploading(true);
+                                            const res = await updateAvatar(file);
+                                            if (res.success) {
+                                                toast({
+                                                    title: "PHOTO UPDATED",
+                                                    description: "Aapki profile image save ho gayi.",
+                                                });
+                                            } else {
+                                                toast({
+                                                    title: "UPLOAD FAILED",
+                                                    description: res.error || "Image upload nahi ho payi.",
+                                                    variant: "destructive",
+                                                });
+                                            }
+                                            setIsAvatarUploading(false);
+                                            e.target.value = "";
+                                        }}
+                                    />
                                     <button 
                                         type="button"
-                                        className="absolute bottom-1 right-1 h-10 w-10 bg-primary text-black rounded-2xl flex items-center justify-center border-4 border-background hover:scale-110 transition-all duration-300 shadow-lg"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="absolute bottom-1 right-1 h-10 w-10 bg-primary text-black rounded-2xl flex items-center justify-center border-4 border-background hover:scale-110 transition-all duration-300 shadow-lg disabled:opacity-50"
+                                        disabled={isAvatarUploading}
                                     >
                                         <Camera className="h-4 w-4" />
                                     </button>

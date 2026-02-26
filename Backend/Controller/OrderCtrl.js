@@ -130,9 +130,10 @@ export const placeOrder = async (req, res) => {
     // Notify Admin
     createNotificationHelper({
       title: "New Order Placed",
-      message: `Order ${order.orderId} placed by ${req.user.name || 'User'}`,
+      message: `Order ${order.orderId} placed by ${req.user.fullName || 'User'}`,
       type: "order",
-      isAdmin: true
+      isAdmin: true,
+      referenceId: order._id
     }, req.io);
 
     // Notify User via Socket
@@ -140,7 +141,8 @@ export const placeOrder = async (req, res) => {
       userId: req.user._id,
       title: "Order Placed Successfully",
       message: `Your order ${order.orderId} has been placed.`,
-      type: "order"
+      type: "order",
+      referenceId: order._id
     }, req.io);
 
     // Notify User via Email
@@ -215,7 +217,8 @@ export const verifyPayment = async (req, res) => {
       title: "Payment Received",
       message: `Payment received for order ${order.orderId}`,
       type: "order",
-      isAdmin: true
+      isAdmin: true,
+      referenceId: order._id
     }, req.io);
 
     // Notify User
@@ -223,7 +226,8 @@ export const verifyPayment = async (req, res) => {
       userId: order.userId,
       title: "Payment Successful",
       message: `We received your payment for order ${order.orderId}. We are processing it now!`,
-      type: "order"
+      type: "order",
+      referenceId: order._id
     }, req.io);
 
     // Notify User via Email (Fetching user email from order doesn't have it directly if only userId is stored... wait, order has userId, which needs population, OR we use shippingAddress email)
@@ -274,9 +278,9 @@ export const getOrderById = async (req, res) => {
     const isAdmin = req.user.role === "admin";
 
     if (!isOwner && !isAdmin) {
-      return res.status(403).json({ 
-        success: false, 
-        message: "You are not authorized to view this order" 
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to view this order"
       });
     }
 
@@ -346,7 +350,8 @@ export const updateOrderStatus = async (req, res) => {
       userId: order.userId,
       title: "Order Status Update",
       message: `Your order ${order.orderId} is now ${normalizedStatus}.`,
-      type: "order"
+      type: "order",
+      referenceId: order._id
     }, req.io);
 
     if (order.shippingAddress && order.shippingAddress.email) {
@@ -387,7 +392,8 @@ export const cancelOrder = async (req, res) => {
       title: "Order Cancelled",
       message: `Order ${order.orderId} was cancelled by user`,
       type: "order",
-      isAdmin: true
+      isAdmin: true,
+      referenceId: order._id
     }, req.io);
 
     res.json({ success: true, message: "Order cancelled successfully", order });

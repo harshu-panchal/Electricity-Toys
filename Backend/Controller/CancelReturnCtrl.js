@@ -75,7 +75,7 @@ export const requestCancelOrder = async (req, res) => {
             title: "Cancel Request Received",
             message: `Order ${order.orderId} cancel requested by user. Reason: ${cancelReason}`,
             type: "order",
-            isAdmin: true
+            isAdmin: true, referenceId: order._id
         }, req.io);
 
         res.json({
@@ -122,12 +122,11 @@ export const requestReturnOrder = async (req, res) => {
             });
         }
 
-        // Validate return reason
-        const validReasons = ["Wrong Product Delivered", "Defective / Damaged Product"];
-        if (!validReasons.includes(returnReason)) {
+        // Validate return reason (allow predefined or custom text)
+        if (typeof returnReason !== "string" || returnReason.trim().length < 3) {
             return res.status(400).json({
                 success: false,
-                message: "Invalid return reason. Allowed: Wrong Product Delivered, Defective / Damaged Product"
+                message: "Please provide a valid return reason"
             });
         }
 
@@ -153,7 +152,7 @@ export const requestReturnOrder = async (req, res) => {
             title: "Return Request Received",
             message: `Order ${order.orderId} return requested. Reason: ${returnReason}`,
             type: "order",
-            isAdmin: true
+            isAdmin: true, referenceId: order._id
         }, req.io);
 
         res.json({
@@ -211,7 +210,7 @@ export const adminApproveCancel = async (req, res) => {
             userId: order.userId,
             title: "Cancel Request Approved",
             message: `Your cancel request for order ${order.orderId} has been approved.`,
-            type: "order"
+            type: "order", referenceId: order._id
         }, req.io);
 
         // Email notification
@@ -262,7 +261,7 @@ export const adminRejectCancel = async (req, res) => {
             userId: order.userId,
             title: "Cancel Request Rejected",
             message: `Your cancel request for order ${order.orderId} has been rejected. Reason: ${reason || 'N/A'}`,
-            type: "order"
+            type: "order", referenceId: order._id
         }, req.io);
 
         res.json({ success: true, message: "Cancel rejected", order });
@@ -313,7 +312,7 @@ export const adminApproveReturn = async (req, res) => {
             userId: order.userId,
             title: "Return Request Approved",
             message: `Your return request for order ${order.orderId} has been approved. Refund will be processed soon.`,
-            type: "order"
+            type: "order", referenceId: order._id
         }, req.io);
 
         // Email
@@ -364,7 +363,7 @@ export const adminRejectReturn = async (req, res) => {
             userId: order.userId,
             title: "Return Request Rejected",
             message: `Your return request for order ${order.orderId} has been rejected. Reason: ${reason || 'N/A'}`,
-            type: "order"
+            type: "order", referenceId: order._id
         }, req.io);
 
         res.json({ success: true, message: "Return rejected", order });
@@ -401,7 +400,7 @@ export const adminCompleteRefund = async (req, res) => {
             userId: order.userId,
             title: "Refund Completed",
             message: `Refund of ₹${order.refundAmount} for order ${order.orderId} has been processed.`,
-            type: "order"
+            type: "order", referenceId: order._id
         }, req.io);
 
         // Email

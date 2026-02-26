@@ -83,6 +83,28 @@ export const useAuthStore = create(
                 }
             },
 
+            updateAvatar: async (file) => {
+                try {
+                    const form = new FormData();
+                    form.append('avatar', file);
+                    const response = await api.put('/auth/update-avatar', form, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                    });
+                    if (response.data.success) {
+                        set((state) => ({
+                            user: { ...state.user, ...response.data.data }
+                        }));
+                        return { success: true, url: response.data.data?.avatar };
+                    }
+                    return { success: false, error: response.data.message };
+                } catch (error) {
+                    return {
+                        success: false,
+                        error: error.response?.data?.message || 'Avatar update failed'
+                    };
+                }
+            },
+
             forgotPassword: async (email) => {
                 try {
                     const response = await api.post('/auth/forgot-password', { email, role: 'user' });

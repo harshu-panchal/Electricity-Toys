@@ -41,6 +41,23 @@ export default function AdminDashboard() {
         fetchOrders();
     }, []);
 
+    const isStatNavigable = (label) =>
+        label === 'Total Revenue' || label === 'Total Orders' || label === 'Avg Order Value' || label === 'Active Toys';
+
+    const handleStatClick = (label) => {
+        if (label === 'Total Revenue') {
+            navigate('/admin/finance');
+            return;
+        }
+        if (label === 'Total Orders' || label === 'Avg Order Value') {
+            navigate('/admin/orders');
+            return;
+        }
+        if (label === 'Active Toys') {
+            navigate('/admin/products');
+        }
+    };
+
     const stats = useMemo(() => [
         {
             label: 'Total Revenue',
@@ -128,7 +145,19 @@ export default function AdminDashboard() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
-                        className="relative p-4 md:p-5 bg-white rounded-2xl md:rounded-[2rem] shadow-sm hover:shadow-xl transition-all duration-300 group border border-slate-100 overflow-hidden"
+                        onClick={() => isStatNavigable(stat.label) && handleStatClick(stat.label)}
+                        role={isStatNavigable(stat.label) ? "button" : undefined}
+                        tabIndex={isStatNavigable(stat.label) ? 0 : undefined}
+                        onKeyDown={(e) => {
+                            if (isStatNavigable(stat.label) && (e.key === 'Enter' || e.key === ' ')) {
+                                e.preventDefault();
+                                handleStatClick(stat.label);
+                            }
+                        }}
+                        className={
+                            "relative p-4 md:p-5 bg-white rounded-2xl md:rounded-[2rem] shadow-sm hover:shadow-xl transition-all duration-300 group border border-slate-100 overflow-hidden " +
+                            (isStatNavigable(stat.label) ? "cursor-pointer hover:-translate-y-0.5" : "")
+                        }
                     >
                         <div className={`absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity duration-300 ${stat.color}`}>
                             <stat.icon className="h-14 w-14 md:h-20 md:w-20 transform translate-x-4 md:translate-x-8 -translate-y-4 md:-translate-y-8 rotate-12" />

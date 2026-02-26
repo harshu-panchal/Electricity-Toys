@@ -17,6 +17,17 @@ export function buildSrcSet(url, widths = [480, 768, 1200]) {
     return widths.map(w => `${optimizeImageUrl(url, w)} ${w}w`).join(', ')
 }
 
+export function getAppBaseUrl() {
+    const envUrl = import.meta.env.VITE_PUBLIC_URL || import.meta.env.VITE_APP_URL
+    if (envUrl && typeof envUrl === 'string') {
+        return envUrl.replace(/\/+$/, '')
+    }
+    if (typeof window !== 'undefined' && window.location) {
+        return window.location.origin
+    }
+    return ''
+}
+
 export async function compressImage(file, maxWidth = 1600, quality = 0.8) {
     if (!file || !file.type.startsWith('image/')) return file
     const img = await new Promise((resolve, reject) => {

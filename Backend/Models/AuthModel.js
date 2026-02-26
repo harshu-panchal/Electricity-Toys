@@ -75,6 +75,15 @@ const userSchema = new mongoose.Schema(
 
     resetToken: String,
     resetTokenExpire: Date,
+    
+    avatar: {
+      type: String,
+      trim: true,
+    },
+    avatarPublicId: {
+      type: String,
+      trim: true,
+    },
   },
   { timestamps: true }
 );

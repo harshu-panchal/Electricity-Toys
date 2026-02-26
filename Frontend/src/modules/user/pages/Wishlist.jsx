@@ -5,13 +5,21 @@ import { ProductCard } from "../components/ProductCard";
 import { Button } from "../components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { QuickView } from "../components/QuickView";
 
 export function Wishlist() {
   const { items, fetchWishlist } = useWishlistStore();
+  const [selectedProduct, setSelectedProduct] = React.useState(null);
+  const [isQuickViewOpen, setIsQuickViewOpen] = React.useState(false);
 
   React.useEffect(() => {
     fetchWishlist();
   }, [fetchWishlist]);
+
+  const handleQuickView = (product) => {
+    setSelectedProduct(product);
+    setIsQuickViewOpen(true);
+  };
 
   return (
     <div className="container mx-auto px-4 py-16 pb-32">
@@ -63,13 +71,14 @@ export function Wishlist() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.3 }}>
-                  <ProductCard product={product} />
+                  <ProductCard product={product} onQuickView={() => handleQuickView(product)} />
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
         )}
       </div>
+      <QuickView product={selectedProduct} open={isQuickViewOpen} onOpenChange={setIsQuickViewOpen} />
     </div>
   );
 }

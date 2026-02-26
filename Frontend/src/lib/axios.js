@@ -54,7 +54,26 @@ api.interceptors.request.use(
 
         return config;
     },
+);
+
+// Add a response interceptor to handle errors globally
+api.interceptors.response.use(
+    (response) => response,
     (error) => {
+        if (error.response && error.response.status === 401) {
+            const isAdminPath = window.location.pathname.startsWith('/admin');
+            const msg = error.response.data?.message || "";
+
+            if (msg.toLowerCase().includes("deactivated") || msg.toLowerCase().includes("deleted")) {
+                if (isAdminPath) {
+                    localStorage.removeItem('admin-auth-storage');
+                    window.location.href = '/admin/login';
+                } else {
+                    localStorage.removeItem('auth-storage');
+                    window.location.href = '/login';
+                }
+            }
+        }
         return Promise.reject(error);
     }
 );

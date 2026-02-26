@@ -14,6 +14,7 @@ import ContactRouter from "./Routers/ContactRouter.js";
 
 import NotificationRouter from "./Routers/NotificationRouter.js";
 import AdminUserRouter from "./Routers/AdminUserRouter.js";
+import FinanceRouter from "./Routers/FinanceRouter.js";
 
 const router = Router();
 
@@ -31,5 +32,6 @@ router.use("/api/v1/noification", NotificationRouter); // Typo intentional? No, 
 router.use("/api/v1/notifications", NotificationRouter);
 router.use("/api/v1", DashboardReportRouter);
 router.use("/api/v1/admin/users", AdminUserRouter);
+router.use("/api/v1/admin/finance", FinanceRouter);
 
 export default router;

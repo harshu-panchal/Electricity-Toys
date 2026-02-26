@@ -15,7 +15,8 @@ export function ResetPassword() {
         newPassword: "",
         confirmPassword: "",
     });
-    const [showPassword, setShowPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const resetPassword = useAuthStore((state) => state.resetPassword);
 
@@ -97,7 +98,7 @@ export function ResetPassword() {
                             <div className="relative">
                                 <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                 <input
-                                    type={showPassword ? "text" : "password"}
+                                    type={showNewPassword ? "text" : "password"}
                                     required
                                     value={formData.newPassword}
                                     onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
@@ -106,9 +107,9 @@ export function ResetPassword() {
                                 />
                                 <button
                                     type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
                                     className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                 </button>
                             </div>
                         </div>
@@ -120,13 +121,19 @@ export function ResetPassword() {
                             <div className="relative">
                                 <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                 <input
-                                    type={showPassword ? "text" : "password"}
+                                    type={showConfirmPassword ? "text" : "password"}
                                     required
                                     value={formData.confirmPassword}
                                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                                     className="w-full h-14 pl-14 pr-12 rounded-full bg-secondary/50 border border-input focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground placeholder:text-muted-foreground transition-all text-base"
                                     placeholder="••••••••"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
                             </div>
                         </div>
 
