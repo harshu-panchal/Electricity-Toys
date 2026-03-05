@@ -205,7 +205,7 @@ export default function Finance() {
             )}
           >
             <div className="absolute -right-6 -bottom-6 h-24 w-24 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity" style={{ background: "currentColor" }} />
-            
+
             <div className="flex items-center justify-between mb-4">
               <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center", card.bg)}>
                 <card.icon className={cn("h-5 w-5", card.color)} />
@@ -349,7 +349,7 @@ export default function Finance() {
                   >
                     <td className="px-6 py-4">
                       <p className="text-xs font-black italic tracking-tighter uppercase group-hover:text-primary transition-colors">
-                        #{(t.orderId || t._id).slice(-8).toUpperCase()}
+                        #{(t.orderId || t._id).toUpperCase()}
                       </p>
                     </td>
                     <td className="px-6 py-4">

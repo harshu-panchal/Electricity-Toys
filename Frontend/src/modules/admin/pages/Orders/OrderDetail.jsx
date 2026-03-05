@@ -354,8 +354,8 @@ export default function OrderDetail() {
                                     {isOnlinePayment ? 'Online Payment' : 'Cash on Delivery'}
                                 </span>
                             </div>
-                            <Badge variant="success" className="text-[8px] uppercase tracking-widest">
-                                {isOnlinePayment ? 'PAID' : 'PENDING'}
+                            <Badge variant={order.paymentStatus === 'Paid' ? 'success' : 'secondary'} className="text-[8px] uppercase tracking-widest">
+                                {order.paymentStatus?.toUpperCase() || 'PENDING'}
                             </Badge>
                         </div>
                     </div>

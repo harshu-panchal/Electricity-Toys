@@ -10,7 +10,7 @@ export const getAdminUsers = async (req, res) => {
     const limit = Math.max(parseInt(req.query.limit || "10", 10), 1);
 
     const filter = { isDeleted: false, role: { $ne: "admin" } };
-    const projection = "fullName email phone role createdAt isActive";
+    const projection = "fullName email phone role avatar createdAt isActive";
 
     const [users, total] = await Promise.all([
       User.find(filter)
@@ -54,7 +54,7 @@ export const getAdminUserById = async (req, res) => {
       .lean();
 
     const orderCount = orders.length;
-    
+
     // Only count spending from non-cancelled orders
     const activeOrders = orders.filter(o => o.orderStatus !== "cancelled");
     const totalSpending = activeOrders.reduce((sum, o) => sum + (Number(o.grandTotal) || 0), 0);

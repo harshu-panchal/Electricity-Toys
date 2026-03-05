@@ -337,6 +337,11 @@ export const updateOrderStatus = async (req, res) => {
     // Simple update for now to unblock admin
     order.orderStatus = normalizedStatus;
 
+    // Auto-update payment status for COD orders when delivered
+    if (normalizedStatus === "delivered" && order.paymentMethod === "COD") {
+      order.paymentStatus = "Paid";
+    }
+
     // Add timestamp
     if (!order.statusTimestamps) {
       order.statusTimestamps = {};

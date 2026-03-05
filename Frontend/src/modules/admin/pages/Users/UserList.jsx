@@ -73,7 +73,7 @@ export default function UserList() {
                     <p className="font-bold uppercase italic tracking-tight text-xs md:text-sm">{u.name}</p>
                   </td>
                   <td className="px-4 py-3 md:px-6 md:py-4">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{u.email}</p>
+                    <p className="text-[10px] text-muted-foreground lowercase tracking-widest">{u.email}</p>
                   </td>
                   <td className="px-4 py-3 md:px-6 md:py-4">
                     <p className="text-[10px] text-primary font-black italic">{u.phone}</p>

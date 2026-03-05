@@ -44,8 +44,8 @@ export default function UserDetail() {
 
       {!u && loading && (
         <div className="flex flex-col items-center justify-center py-20 animate-pulse">
-           <div className="h-12 w-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin mb-4" />
-           <p className="text-muted-foreground font-black italic uppercase tracking-widest text-xs">Synchronizing Data...</p>
+          <div className="h-12 w-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin mb-4" />
+          <p className="text-muted-foreground font-black italic uppercase tracking-widest text-xs">Synchronizing Data...</p>
         </div>
       )}
 
@@ -53,25 +53,33 @@ export default function UserDetail() {
         <div className="space-y-10">
           {/* Main Identity & Stats Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
+
             {/* User Identity Card */}
             <div className="lg:col-span-8 bg-background border border-secondary/20 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-primary/5 flex flex-col md:flex-row">
               <div className="md:w-1/3 bg-secondary/5 p-8 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-secondary/20 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4">
-                   <Badge variant={u.status === 'Active' ? 'success' : 'destructive'} className="text-[10px] font-black uppercase tracking-widest px-3 py-1">
-                     {u.status}
-                   </Badge>
+                  <Badge variant={u.status === 'Active' ? 'success' : 'destructive'} className="text-[10px] font-black uppercase tracking-widest px-3 py-1">
+                    {u.status}
+                  </Badge>
                 </div>
-                
+
                 <div className="relative mb-6">
                   <div className="h-28 w-28 rounded-3xl bg-primary/10 flex items-center justify-center border-2 border-primary/20 shadow-inner group overflow-hidden">
-                    <UserIcon className="h-12 w-12 text-primary group-hover:scale-110 transition-transform duration-500" />
+                    {u.avatar ? (
+                      <img
+                        src={u.avatar}
+                        alt={u.name}
+                        className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    ) : (
+                      <UserIcon className="h-12 w-12 text-primary group-hover:scale-110 transition-transform duration-500" />
+                    )}
                   </div>
                   <div className="absolute -bottom-2 -right-2 h-8 w-8 rounded-xl bg-background border border-secondary/20 flex items-center justify-center shadow-lg">
                     <Shield className="h-4 w-4 text-primary" />
                   </div>
                 </div>
-                
+
                 <h2 className="text-2xl font-black italic tracking-tighter uppercase mb-2">{u.name}</h2>
                 <Badge variant="outline" className="text-[10px] font-black uppercase tracking-[0.2em] border-primary/30 text-primary">
                   {u.role}
@@ -88,7 +96,7 @@ export default function UserDetail() {
                           <div className="h-8 w-8 rounded-lg bg-secondary/10 flex items-center justify-center border border-secondary/20 group-hover:bg-primary/10 transition-colors">
                             <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                           </div>
-                          <span className="text-sm font-bold truncate">{u.email}</span>
+                          <span className="text-sm font-bold break-all">{u.email}</span>
                         </div>
                         <div className="flex items-center gap-3 group">
                           <div className="h-8 w-8 rounded-lg bg-secondary/10 flex items-center justify-center border border-secondary/20 group-hover:bg-primary/10 transition-colors">
@@ -98,7 +106,7 @@ export default function UserDetail() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div>
                       <Label className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block">Account Metadata</Label>
                       <div className="flex items-center gap-3 group">
@@ -116,7 +124,7 @@ export default function UserDetail() {
                       <Label className="text-[10px] font-black uppercase tracking-widest text-primary block">Verified Address</Label>
                     </div>
                     <p className="text-sm font-black italic tracking-tight uppercase leading-relaxed text-foreground">
-                      {(u.address || u.city || u.state || u.zipCode) 
+                      {(u.address || u.city || u.state || u.zipCode)
                         ? (
                           <>
                             {u.address && <span className="block mb-1">{u.address}</span>}
@@ -124,14 +132,14 @@ export default function UserDetail() {
                               {u.city}{u.city && u.state ? ', ' : ''}{u.state} {u.zipCode && `- ${u.zipCode}`}
                             </span>
                           </>
-                        ) 
+                        )
                         : 'No primary address configured for this account.'}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
-            
+
             {/* Quick Metrics Column */}
             <div className="lg:col-span-4 flex flex-col gap-4">
               <div className="bg-foreground text-background p-6 rounded-[2rem] border border-secondary/20 shadow-xl relative overflow-hidden group">
@@ -141,7 +149,7 @@ export default function UserDetail() {
                   <span className="text-[10px] uppercase font-black tracking-widest opacity-60">Revenue Impact</span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                   <p className="text-4xl font-black italic tracking-tighter">₹{(derivedTotalSpending || 0).toLocaleString()}</p>
+                  <p className="text-4xl font-black italic tracking-tighter">₹{(derivedTotalSpending || 0).toLocaleString()}</p>
                 </div>
                 <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 mt-1">LIFETIME VALUE (LTV)</p>
                 <p className="text-[9px] font-bold uppercase tracking-wider opacity-30 mt-0.5">Excludes {derivedCancelledCount} cancelled</p>
@@ -202,7 +210,7 @@ export default function UserDetail() {
                       <tr key={o.id} className="group hover:bg-secondary/5 transition-colors">
                         <td className="px-8 py-5">
                           <p className="text-sm font-black italic tracking-tighter uppercase group-hover:text-primary transition-colors">
-                            #{o.id.slice(-8).toUpperCase()}
+                            #{o.id.toUpperCase()}
                           </p>
                         </td>
                         <td className="px-8 py-5">
@@ -222,8 +230,8 @@ export default function UserDetail() {
                           )}>₹{(o.total || 0).toLocaleString()}</p>
                         </td>
                         <td className="px-8 py-5 text-right">
-                          <Badge 
-                            variant="outline" 
+                          <Badge
+                            variant="outline"
                             className={cn(
                               "text-[9px] font-black uppercase tracking-widest px-3 py-1",
                               o.status?.toLowerCase() === 'delivered' ? 'border-primary/50 text-primary bg-primary/5' : '',
@@ -238,12 +246,12 @@ export default function UserDetail() {
                     {selectedUserOrders.length === 0 && (
                       <tr>
                         <td colSpan={5} className="px-8 py-16 text-center">
-                           <div className="flex flex-col items-center gap-3">
-                             <div className="h-12 w-12 rounded-2xl bg-secondary/5 flex items-center justify-center">
-                               <ShoppingBag className="h-6 w-6 text-muted-foreground opacity-20" />
-                             </div>
-                             <p className="text-xs font-black italic uppercase tracking-[0.2em] text-muted-foreground/50">Zero transactional footprints</p>
-                           </div>
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="h-12 w-12 rounded-2xl bg-secondary/5 flex items-center justify-center">
+                              <ShoppingBag className="h-6 w-6 text-muted-foreground opacity-20" />
+                            </div>
+                            <p className="text-xs font-black italic uppercase tracking-[0.2em] text-muted-foreground/50">Zero transactional footprints</p>
+                          </div>
                         </td>
                       </tr>
                     )}

@@ -85,25 +85,30 @@ export function ProductCard({ product, onQuickView }) {
                     )}
 
                     {/* Action Buttons */}
-                    <div className="absolute top-2 right-2 md:top-4 md:right-4 flex flex-col gap-2 z-20 translate-x-12 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out">
+                    <div className="absolute top-2 right-2 md:top-4 md:right-4 flex flex-col gap-2 z-20">
+                        {/* Wishlist Button - Persistent if active, hover-based if not */}
                         <button
                             onClick={handleToggleWishlist}
-                            className="bg-background/80 backdrop-blur-md p-1.5 md:p-2.5 rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-background"
+                            className={`bg-background/80 backdrop-blur-md p-1.5 md:p-2.5 rounded-full shadow-lg hover:scale-110 transition-all duration-300 ease-out flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-background ${isInWishlist ? "translate-x-0 opacity-100" : "translate-x-12 opacity-0 group-hover:translate-x-0 group-hover:opacity-100"
+                                }`}
                         >
                             <Heart className={`w-3 h-3 md:w-4 md:h-4 ${isInWishlist ? 'fill-red-500 text-red-500' : ''}`} />
                         </button>
-                        <button
-                            onClick={handleQuickView}
-                            className="bg-background/80 backdrop-blur-md p-1.5 md:p-2.5 rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-background"
-                        >
-                            <Maximize2 className="w-3 h-3 md:w-4 md:h-4" />
-                        </button>
-                        <button
-                            onClick={handleAddToCart}
-                            className="bg-background/80 backdrop-blur-md p-1.5 md:p-2.5 rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-background"
-                        >
-                            <ShoppingBag className="w-3 h-3 md:w-4 md:h-4" />
-                        </button>
+
+                        <div className="flex flex-col gap-2 translate-x-12 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-out">
+                            <button
+                                onClick={handleQuickView}
+                                className="bg-background/80 backdrop-blur-md p-1.5 md:p-2.5 rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-background"
+                            >
+                                <Maximize2 className="w-3 h-3 md:w-4 md:h-4" />
+                            </button>
+                            <button
+                                onClick={handleAddToCart}
+                                className="bg-background/80 backdrop-blur-md p-1.5 md:p-2.5 rounded-full shadow-lg hover:scale-110 transition-transform flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-background"
+                            >
+                                <ShoppingBag className="w-3 h-3 md:w-4 md:h-4" />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Image */}

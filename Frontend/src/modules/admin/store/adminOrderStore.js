@@ -104,7 +104,11 @@ export const useAdminOrderStore = create(
                     if (response.data.success) {
                         set({
                             orders: get().orders.map(o =>
-                                o.id === id ? { ...o, status: status } : o
+                                o.id === id ? {
+                                    ...o,
+                                    status: status,
+                                    paymentStatus: response.data.order.paymentStatus
+                                } : o
                             )
                         });
                         return { success: true };

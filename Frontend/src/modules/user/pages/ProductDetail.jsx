@@ -198,8 +198,8 @@ export function ProductDetail() {
                                             }
                                         }}
                                     >
-                                            {img ? (
-                                                <img src={optimizeImageUrl(img, 600)} alt="" className="w-full h-full object-cover opacity-70 hover:opacity-100 transition-opacity" onError={(e) => e.target.style.display = 'none'} />
+                                        {img ? (
+                                            <img src={optimizeImageUrl(img, 600)} alt="" className="w-full h-full object-cover opacity-70 hover:opacity-100 transition-opacity" onError={(e) => e.target.style.display = 'none'} />
                                         ) : '🎮'}
                                     </div>
                                 ))}
@@ -211,9 +211,38 @@ export function ProductDetail() {
                     <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="flex flex-col justify-start"
+                        className="flex flex-col justify-start relative"
                     >
-                        <div className="flex items-center gap-4 mb-4">
+                        {/* Share Button relocated to top right */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-0 right-0 h-10 w-10 rounded-none border border-primary/10 hover:border-primary/40 hover:bg-primary/5 transition-all z-10"
+                            onClick={async () => {
+                                const base = getAppBaseUrl();
+                                const url = `${base}/product/${product.id}`;
+                                const title = product.name;
+                                try {
+                                    if (navigator.share) {
+                                        await navigator.share({ title, url });
+                                    } else if (navigator.clipboard) {
+                                        await navigator.clipboard.writeText(url);
+                                    }
+                                    toast({ title: "Link shared", description: "Product link shared/copied." });
+                                } catch {
+                                    try {
+                                        await navigator.clipboard.writeText(url);
+                                        toast({ title: "Link copied", description: "Product link copied to clipboard." });
+                                    } catch (err) {
+                                        console.error(err);
+                                    }
+                                }
+                            }}
+                        >
+                            <Share2 className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                        </Button>
+
+                        <div className="flex items-center gap-4 mb-4 pr-12">
                             <Badge className="rounded-none font-black tracking-widest uppercase py-1 px-3">{product.category}</Badge>
                             {product.isNew && <Badge variant="success" className="rounded-none font-black tracking-widest uppercase py-1 px-3">NEW ARRIVAL</Badge>}
                         </div>
@@ -320,34 +349,6 @@ export function ProductDetail() {
                                 >
                                     <Heart className={isInWishlist ? "fill-primary text-primary" : ""} />
                                 </Button>
-                                
-                                <Button
-                                    variant="outline"
-                                    size="lg"
-                                    className="h-12 w-12 rounded-none border-2 border-primary/20 hover:border-primary flex-shrink-0"
-                                    onClick={async () => {
-                                        const base = getAppBaseUrl();
-                                        const url = `${base}/product/${product.id}`;
-                                        const title = product.name;
-                                        try {
-                                            if (navigator.share) {
-                                                await navigator.share({ title, url });
-                                            } else if (navigator.clipboard) {
-                                                await navigator.clipboard.writeText(url);
-                                            }
-                                            toast({ title: "Link shared", description: "Product link shared/copied." });
-                                        } catch {
-                                            try {
-                                                await navigator.clipboard.writeText(url);
-                                                toast({ title: "Link copied", description: "Product link copied to clipboard." });
-                                            } catch (err) {
-                                                console.error(err);
-                                            }
-                                        }
-                                    }}
-                                >
-                                    <Share2 className="h-4 w-4" />
-                                </Button>
                             </div>
                         </div>
 
@@ -382,3 +383,4 @@ export function ProductDetail() {
         </div>
     );
 }
+
