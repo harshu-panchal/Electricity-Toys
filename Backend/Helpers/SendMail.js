@@ -3,15 +3,19 @@ import nodemailer from "nodemailer";
 export const sendOTPEmail = async (to, otp, subject = "Verify Your Account - OTP", title = "Account Verification") => {
   try {
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true, // Use SSL
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      logger: true, // Log to console
+      debug: true,  // Include debug output
     });
 
     const mailOptions = {
-      from: `"ElectriciToys" <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_USER,
       to,
       subject,
       html: `
@@ -35,7 +39,9 @@ export const sendOTPEmail = async (to, otp, subject = "Verify Your Account - OTP
 export const sendContactEmail = async (adminEmail, contactData) => {
   try {
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
