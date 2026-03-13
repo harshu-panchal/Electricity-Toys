@@ -14,33 +14,73 @@ const createTransporter = () => {
   });
 };
 
-export const sendOTPEmail = async (to, otp, subject = "Verify Your Account - OTP", title = "Account Verification") => {
+export const sendOTPEmail = async (to, otp, subject = "Important: Your Verification Code for ElectriciToys Hub", title = "Verify Your Account") => {
   try {
     const transporter = createTransporter();
+    const userEmail = (process.env.EMAIL_USER || "").trim();
+    
     const mailOptions = {
-      from: `"ElectriciToys Hub" <${(process.env.EMAIL_USER || "").trim()}>`,
+      from: `"ElectriciToys Hub" <${userEmail}>`,
       to: (to || "").toLowerCase().trim(),
-      subject,
-      replyTo: (process.env.EMAIL_USER || "").trim(),
-      text: `Your OTP for account verification is ${otp}. This code is valid for 10 minutes.`,
+      subject: `${otp} is your ElectriciToys verification code`,
+      replyTo: userEmail,
+      headers: {
+        "X-Priority": "1 (Highest)",
+        "X-MSMail-Priority": "High",
+        "Importance": "High",
+      },
+      text: `Hello, Your verification code for ElectriciToys is: ${otp}. This code expires in 10 minutes. If you did not request this code, please ignore this email.`,
       html: `
-        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; border: 1px solid #e0e0e0; border-radius: 12px; max-width: 600px; margin: auto; background-color: #ffffff;">
-          <div style="text-align: center; margin-bottom: 25px;">
-             <h2 style="color: #C78023; margin: 0; font-size: 24px;">${title}</h2>
-             <div style="width: 60px; height: 3px; background-color: #C78023; margin: 10px auto;"></div>
-          </div>
-          <div style="padding: 10px 0;">
-            <p style="font-size: 16px; color: #333;">Hello,</p>
-            <p style="font-size: 15px; color: #555; line-height: 1.6;">Use the following One-Time Password (OTP) to complete your verification with <strong>ElectriciToys</strong>:</p>
-            <div style="text-align: center; margin: 35px 0;">
-              <span style="font-size: 32px; font-weight: bold; color: #1a1a1a; letter-spacing: 8px; background: #f8f8f8; padding: 15px 25px; border-radius: 10px; border: 1px solid #ddd; display: inline-block;">${otp}</span>
+        <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 40px 20px; background-color: #f4f4f4; min-height: 100%;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #e0e0e0;">
+            <div style="background-color: #C78023; padding: 30px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">ElectriciToys Hub</h1>
             </div>
-            <p style="font-size: 14px; color: #d9534f; text-align: center; font-weight: bold;">This OTP is valid for 10 minutes.</p>
-            <p style="font-size: 13px; color: #777; text-align: center;">For security reasons, do not share this code with anyone.</p>
+            
+            <div style="padding: 40px 35px;">
+              <h2 style="color: #1a1a1a; margin-top: 0; font-size: 22px;">Confirm Your Email</h2>
+              <p style="font-size: 16px; color: #444; line-height: 1.6; margin-bottom: 30px;">
+                Hello, <br/><br/>
+                We received a request to verify your email address for your ElectriciToys account. Please use the following one-time password (OTP) to proceed:
+              </p>
+              
+              <div style="text-align: center; margin: 40px 0;">
+                <div style="background-color: #f8f9fa; border: 2px dashed #C78023; border-radius: 12px; padding: 25px; display: inline-block;">
+                  <span style="font-size: 38px; font-weight: 800; color: #C78023; letter-spacing: 10px; font-family: monospace;">${otp}</span>
+                </div>
+                <p style="font-size: 13px; color: #888; margin-top: 15px;">Valid for the next 10 minutes only.</p>
+              </div>
+
+              <div style="background-color: #fff9f2; border-left: 4px solid #C78023; padding: 15px; margin-bottom: 30px;">
+                <p style="font-size: 14px; color: #7a5a30; margin: 0;">
+                  <strong>Security Note:</strong> Never share this code with anyone. Our team will never ask for your OTP via phone or chat.
+                </p>
+              </div>
+
+              <p style="font-size: 14px; color: #666; line-height: 1.5;">
+                If you didn't create an account, you can safely ignore this email. No further action is required.
+              </p>
+            </div>
+
+            <div style="background-color: #fafafa; padding: 30px; text-align: center; border-top: 1px solid #eeeeee;">
+              <p style="font-size: 12px; color: #999; margin: 0 0 10px 0;">
+                Sent by ElectriciToys Hub &bull; Leading Toy Innovation
+              </p>
+              <p style="font-size: 11px; color: #aaa; margin: 0; line-height: 1.4;">
+                123 Toy Street, Innovation Park, <br/>
+                Digital City, 411001
+              </p>
+              <div style="margin-top: 15px; border-top: 1px solid #f0f0f0; padding-top: 15px;">
+                <p style="font-size: 11px; color: #bbb; margin: 0;">
+                  &copy; ${new Date().getFullYear()} ElectriciToys Hub. All rights reserved.
+                </p>
+              </div>
+            </div>
           </div>
-          <div style="border-top: 1px solid #eeeeee; padding-top: 20px; margin-top: 30px; text-align: center;">
-            <p style="font-size: 12px; color: #999; margin-bottom: 5px;">If you did not request this, please ignore this email.</p>
-            <p style="font-size: 12px; color: #999; margin: 0;">&copy; ${new Date().getFullYear()} ElectriciToys Hub. All rights reserved.</p>
+          <div style="text-align: center; margin-top: 20px;">
+            <p style="font-size: 11px; color: #bbb;">
+              This is an automated transactional email.
+            </p>
           </div>
         </div>
       `,
