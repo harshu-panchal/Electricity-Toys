@@ -13,8 +13,8 @@ export const registerUser = async (req, res) => {
     const { fullName, email, password } = req.body;
 
     const userExists = await User.findOne({ email, isDeleted: false });
-    if (userExists) {
-      console.log("User already exists:", email); // DEBUG LOG
+    if (userExists && userExists.isVerified) {
+      console.log("User already exists and is verified:", email); // DEBUG LOG
       return res.status(400).json({
         success: false,
         message: "User already exists",
@@ -40,13 +40,23 @@ export const registerUser = async (req, res) => {
     );
     console.log("OTP record created/updated for:", email); // DEBUG LOG
 
-    await sendOTPEmail(email, otp);
-
-    res.json({
-      success: true,
-      message: "Registration successful. OTP sent to your email.",
-      data: null,
-    });
+    try {
+      await sendOTPEmail(email, otp);
+      res.json({
+        success: true,
+        message: "Registration successful. OTP sent to your email.",
+        data: null,
+      });
+    } catch (mailError) {
+      console.error("Mail Error during registration:", mailError.message);
+      // Optional: Delete the temporary OTP record if email fail? 
+      // Better to keep it so they can 'resend' it.
+      res.status(500).json({
+        success: false,
+        message: mailError.message || "Failed to send OTP. Please try again.",
+        data: null,
+      });
+    }
   } catch (error) {
     console.error("Register Error:", error);
     res.status(500).json({ success: false, message: "Server error", data: null });
@@ -227,13 +237,19 @@ export const verifyUser = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid or expired OTP", data: null });
     }
 
-    // Create the actual user in the database now that OTP is verified
-    const user = await User.create({
-      fullName: otpData.fullName,
-      email: otpData.email,
-      password: otpData.password,
-      isVerified: true,
-    });
+    // Create or update the actual user in the database now that OTP is verified
+    const user = await User.findOneAndUpdate(
+      { email: otpData.email },
+      {
+        fullName: otpData.fullName,
+        email: otpData.email,
+        password: otpData.password,
+        isVerified: true,
+        otp: undefined, // Clear any legacy OTP fields
+        otpExpire: undefined,
+      },
+      { upsert: true, new: true }
+    );
 
     // Delete the temporary OTP data
     await OTP.deleteOne({ _id: otpData._id });

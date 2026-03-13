@@ -24,9 +24,11 @@ export const sendOTPEmail = async (to, otp, subject = "Verify Your Account - OTP
 
     await transporter.sendMail(mailOptions);
     console.log("OTP Email Sent Successfully to:", to);
+    return true;
 
   } catch (error) {
     console.error("Critical Email Error (OTP):", error);
+    throw new Error("Failed to send OTP email. Please check your email address or try again later.");
   }
 };
 
