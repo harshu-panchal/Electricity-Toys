@@ -13,13 +13,20 @@ export const registerUser = async (req, res) => {
     const { fullName, email, password } = req.body;
 
     const userExists = await User.findOne({ email, isDeleted: false });
-    if (userExists && userExists.isVerified) {
-      console.log("User already exists and is verified:", email); // DEBUG LOG
-      return res.status(400).json({
-        success: false,
-        message: "User already exists",
-        data: null,
-      });
+    if (userExists) {
+      if (userExists.isVerified) {
+        console.log("User already exists and is verified:", email); // DEBUG LOG
+        return res.status(400).json({
+          success: false,
+          message: "User already exists",
+          data: null,
+        });
+      } else {
+        // If user exists but is not verified, delete them from User collection
+        // to satisfy "db me store verify ke bad hi ho" requirement
+        console.log("Deleting unverified legacy user record to clean up:", email);
+        await User.deleteOne({ _id: userExists._id });
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -374,16 +381,30 @@ export const resendOTP = async (req, res) => {
     let otpData = await OTP.findOne({ email });
 
     if (!otpData) {
-      // Check if user already exists and is unverified (for legacy support if any)
-      const user = await User.findOne({ email, isVerified: false });
-      if (!user) {
+      // Check if user already exists and is unverified (migration to OTP model)
+      const unverifiedUser = await User.findOne({ email, isVerified: false });
+      if (!unverifiedUser) {
         return res.status(404).json({ success: false, message: "Registration not found or already verified", data: null });
       }
       
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      user.otp = otp;
-      user.otpExpire = Date.now() + 10 * 60 * 1000;
-      await user.save();
+      // Move them to OTP collection
+      otpData = await OTP.findOneAndUpdate(
+        { email },
+        {
+          fullName: unverifiedUser.fullName,
+          email: unverifiedUser.email,
+          password: unverifiedUser.password,
+          otp,
+          otpExpire: Date.now() + 10 * 60 * 1000,
+        },
+        { upsert: true, new: true }
+      );
+      
+      // Delete from main User collection to keep it clean
+      await User.deleteOne({ _id: unverifiedUser._id });
+      console.log("Migrated unverified user to temporary OTP collection:", email);
+      
       await sendOTPEmail(email, otp);
       return res.json({ success: true, message: "OTP sent successfully", data: null });
     }

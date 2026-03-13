@@ -15,14 +15,19 @@ export const sendOTPEmail = async (to, otp, subject = "Verify Your Account - OTP
     });
 
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: `"ElectriciToys Hub" <${process.env.EMAIL_USER}>`, // Official display name
       to,
       subject,
+      text: `Your OTP for account verification is ${otp}. This code is valid for 10 minutes.`, // Text fallback for better delivery
       html: `
-        <h3>${title}</h3>
-        <p>Your OTP is:</p>
-        <h2>${otp}</h2>
-        <p>This OTP is valid for 10 minutes</p>
+        <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+          <h2 style="color: #C78023;">Account Verification</h2>
+          <p>Thank you for registering with ElectriciToys. Use the following OTP to complete your verification:</p>
+          <h1 style="color: #333; letter-spacing: 5px;">${otp}</h1>
+          <p style="color: #666;">This OTP is valid for <b>10 minutes</b>.</p>
+          <hr />
+          <p style="font-size: 12px; color: #888;">If you did not request this, please ignore this email.</p>
+        </div>
       `,
     };
 
