@@ -12,8 +12,6 @@ export const useAuthStore = create(
                 try {
                     const response = await api.post('/auth/login', { email, password });
                     if (response.data.success) {
-                        // Merge token into user object for persistence if needed, 
-                        // or ensure the structure matches what the axios interceptor expects
                         const userData = { ...response.data.data, token: response.data.token };
                         set({ user: userData, isAuthenticated: true });
                         return { success: true };
@@ -59,6 +57,18 @@ export const useAuthStore = create(
                     return {
                         success: false,
                         error: error.response?.data?.message || 'Verification failed'
+                    };
+                }
+            },
+
+            resendOtp: async (email) => {
+                try {
+                    const response = await api.post('/auth/resend-otp', { email });
+                    return { success: response.data.success, message: response.data.message };
+                } catch (error) {
+                    return {
+                        success: false,
+                        error: error.response?.data?.message || 'Failed to resend OTP'
                     };
                 }
             },
@@ -142,7 +152,7 @@ export const useAuthStore = create(
             },
         }),
         {
-            name: 'auth-storage', // unique name for localStorage key
+            name: 'auth-storage',
         }
     )
 );

@@ -14,18 +14,49 @@ export function VerifyOtp() {
   const [isLoading, setIsLoading] = useState(false);
 
   const verifyOtp = useAuthStore((state) => state.verifyOtp);
+  const resendOtp = useAuthStore((state) => state.resendOtp);
+  const [timer, setTimer] = useState(0);
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
-    // If no email provided, maybe user should not be here, but we'll let them enter it.
-    // Or we could redirect to login if we want to be strict.
-    if (!email && !location.state?.email) {
-      toast({
-        title: "Information Missing",
-        description: "Please enter your email to verify OTP.",
-        variant: "default",
-      });
+    let interval;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
     }
-  }, [email, location.state, toast]);
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  const handleResend = async () => {
+    if (!email || timer > 0 || isResending) return;
+
+    setIsResending(true);
+    try {
+      const result = await resendOtp(email);
+      if (result.success) {
+        toast({
+          title: "OTP SENT! 📧",
+          description: "A new code has been sent to your email.",
+        });
+        setTimer(60); // 60 seconds cooldown
+      } else {
+        toast({
+          title: "RESEND FAILED",
+          description: result.error || "Could not resend OTP.",
+          variant: "destructive",
+        });
+      }
+    } catch {
+      toast({
+        title: "ERROR",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -127,8 +158,12 @@ export function VerifyOtp() {
 
           <p className="text-center text-sm text-muted-foreground">
             Didn&apos;t receive code?{" "}
-            <button className="font-bold text-foreground hover:underline">
-              Resend
+            <button 
+              type="button"
+              onClick={handleResend}
+              disabled={timer > 0 || isResending}
+              className="font-bold text-foreground hover:underline disabled:opacity-50 disabled:cursor-not-allowed">
+              {isResending ? "Sending..." : timer > 0 ? `Resend in ${timer}s` : "Resend"}
             </button>
           </p>
           <p className="text-center text-sm text-muted-foreground mt-2">
