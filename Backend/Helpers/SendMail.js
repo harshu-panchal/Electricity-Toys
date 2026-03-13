@@ -3,12 +3,10 @@ import nodemailer from "nodemailer";
 export const sendOTPEmail = async (to, otp, subject = "Verify Your Account - OTP", title = "Account Verification") => {
   try {
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",   // ya apna SMTP
-      port: 587,
-      secure: false,
+      service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER,   // your email
-        pass: process.env.EMAIL_PASS,   // app password
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
@@ -25,19 +23,17 @@ export const sendOTPEmail = async (to, otp, subject = "Verify Your Account - OTP
     };
 
     await transporter.sendMail(mailOptions);
-    console.log("OTP Email Sent Successfully");
+    console.log("OTP Email Sent Successfully to:", to);
 
   } catch (error) {
-    console.log("Email Error:", error);
+    console.error("Critical Email Error (OTP):", error);
   }
 };
 
 export const sendContactEmail = async (adminEmail, contactData) => {
   try {
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,

@@ -1,4 +1,5 @@
 import User from "../Models/AuthModel.js";
+import OTP from "../Models/OTPModel.js";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { generateToken } from "../Helpers/generateToken.js";
@@ -25,15 +26,19 @@ export const registerUser = async (req, res) => {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    console.log("Creating user...", { fullName, email }); // DEBUG LOG
-    const user = await User.create({
-      fullName,
-      email,
-      password: hashedPassword,
-      otp,
-      otpExpire: Date.now() + 10 * 60 * 1000,
-    });
-    console.log("User created:", user._id); // DEBUG LOG
+    console.log("Storing temporary registration data...", { fullName, email }); // DEBUG LOG
+    await OTP.findOneAndUpdate(
+      { email },
+      {
+        fullName,
+        email,
+        password: hashedPassword,
+        otp,
+        otpExpire: Date.now() + 10 * 60 * 1000,
+      },
+      { upsert: true, new: true }
+    );
+    console.log("OTP record created/updated for:", email); // DEBUG LOG
 
     await sendOTPEmail(email, otp);
 
@@ -211,22 +216,28 @@ export const verifyUser = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Email and OTP are required", data: null });
 
-    const user = await User.findOne({
+    const otpData = await OTP.findOne({
       email,
       otp,
       otpExpire: { $gt: Date.now() },
     });
 
-    if (!user) {
+    if (!otpData) {
       console.log("Verify failed: Invalid OTP or Email for", email);
       return res.status(400).json({ success: false, message: "Invalid or expired OTP", data: null });
     }
 
-    user.otp = undefined;
-    user.otpExpire = undefined;
-    user.isVerified = true;
-    await user.save();
-    console.log("User verified:", user._id);
+    // Create the actual user in the database now that OTP is verified
+    const user = await User.create({
+      fullName: otpData.fullName,
+      email: otpData.email,
+      password: otpData.password,
+      isVerified: true,
+    });
+
+    // Delete the temporary OTP data
+    await OTP.deleteOne({ _id: otpData._id });
+    console.log("User created and verified:", user._id);
 
     res.json({
       success: true,
@@ -344,15 +355,27 @@ export const toggleUserStatus = async (req, res) => {
 export const resendOTP = async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+    let otpData = await OTP.findOne({ email });
 
-    if (!user)
-      return res.status(404).json({ success: false, message: "User not found", data: null });
+    if (!otpData) {
+      // Check if user already exists and is unverified (for legacy support if any)
+      const user = await User.findOne({ email, isVerified: false });
+      if (!user) {
+        return res.status(404).json({ success: false, message: "Registration not found or already verified", data: null });
+      }
+      
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      user.otp = otp;
+      user.otpExpire = Date.now() + 10 * 60 * 1000;
+      await user.save();
+      await sendOTPEmail(email, otp);
+      return res.json({ success: true, message: "OTP sent successfully", data: null });
+    }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    user.otp = otp;
-    user.otpExpire = Date.now() + 10 * 60 * 1000;
-    await user.save();
+    otpData.otp = otp;
+    otpData.otpExpire = Date.now() + 10 * 60 * 1000;
+    await otpData.save();
 
     await sendOTPEmail(email, otp);
 
