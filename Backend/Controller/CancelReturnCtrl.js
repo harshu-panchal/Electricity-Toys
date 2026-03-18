@@ -423,8 +423,13 @@ export const adminCompleteRefund = async (req, res) => {
 // ================= ADMIN: GET DASHBOARD STATS =================
 export const getAdminDashboardStats = async (req, res) => {
     try {
-        // Get all orders
-        const orders = await Order.find();
+        // Get orders visible to admin (exclude unpaid online orders)
+        const orders = await Order.find({
+            $or: [
+                { paymentMethod: "COD" },
+                { paymentStatus: "Paid" }
+            ]
+        });
 
         // Revenue: Only from delivered orders that are not cancelled/return-approved
         const revenueOrders = orders.filter(order =>
@@ -481,17 +486,33 @@ export const getOrdersWithFilters = async (req, res) => {
     try {
         const { filter } = req.query;
 
-        let query = {};
+        let query = {
+            $or: [
+                { paymentMethod: "COD" },
+                { paymentStatus: "Paid" }
+            ]
+        };
 
         switch (filter) {
             case "cancel-requests":
-                query = { cancelRequestedAt: { $ne: null }, cancelApprovedByAdmin: null };
+                query = {
+                    ...query,
+                    cancelRequestedAt: { $ne: null },
+                    cancelApprovedByAdmin: null
+                };
                 break;
             case "return-requests":
-                query = { returnRequestedAt: { $ne: null }, returnApprovedByAdmin: null };
+                query = {
+                    ...query,
+                    returnRequestedAt: { $ne: null },
+                    returnApprovedByAdmin: null
+                };
                 break;
             case "pending-refunds":
-                query = { refundStatus: "Processing" };
+                query = {
+                    ...query,
+                    refundStatus: "Processing"
+                };
                 break;
             default:
                 // All orders

@@ -166,6 +166,12 @@ export function VerifyOtp() {
               {isResending ? "Sending..." : timer > 0 ? `Resend in ${timer}s` : "Resend"}
             </button>
           </p>
+          <div className="mt-3 flex justify-center">
+            <p className="text-xs text-amber-800 dark:text-amber-200 bg-amber-50/80 dark:bg-amber-500/10 border border-amber-200/70 dark:border-amber-500/30 rounded-xl px-3 py-2 max-w-sm text-center">
+              Not received OTP? Please check your Spam/Junk/Promotions folder and
+              make sure your email is correct.
+            </p>
+          </div>
           <p className="text-center text-sm text-muted-foreground mt-2">
             <Link to="/login" className="text-primary hover:underline">
               Back to Login

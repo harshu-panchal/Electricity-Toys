@@ -99,7 +99,52 @@ export const placeOrder = async (req, res) => {
       return res.status(404).json({ success: false, message: "Shipping address not found" });
     }
 
-    // Create order in DB with shipping details
+    // ONLINE: create DB Order in Pending state, but do NOT notify/email/deduct stock yet.
+    // Admin lists will hide unpaid online orders; order becomes visible only after payment verification (Paid).
+    if (isOnlinePayment) {
+      const order = await Order.create({
+        userId: req.user._id,
+        products: orderProducts,
+        totalAmount,
+        shippingAmount,
+        codCharge,
+        grandTotal,
+        paymentMethod: normalizedPaymentMethod,
+        paymentStatus: "Pending",
+        orderId: razorpayOrderId,
+        shippingAddressId,
+        shippingAddress: {
+          name: address.name,
+          email: address.email,
+          phone: address.phone,
+          addressLine1: address.addressLine1,
+          addressLine2: address.addressLine2,
+          city: address.city,
+          state: address.state,
+          country: address.country,
+          zip: address.zip
+        }
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "Payment initiated",
+        order: {
+          orderId: order.orderId,
+          grandTotal: order.grandTotal,
+          paymentMethod: order.paymentMethod
+        },
+        shippingInfo: {
+          subtotal: totalAmount,
+          shippingAmount,
+          codCharge,
+          grandTotal,
+          isFreeShipping: shippingResult.isFreeShipping
+        }
+      });
+    }
+
+    // COD (and other offline methods): create the Order immediately
     const order = await Order.create({
       userId: req.user._id,
       products: orderProducts,
@@ -109,7 +154,7 @@ export const placeOrder = async (req, res) => {
       grandTotal,
       paymentMethod: normalizedPaymentMethod,
       paymentStatus: "Pending",
-      orderId: razorpayOrderId || `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      orderId: `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       shippingAddressId,
       shippingAddress: {
         name: address.name,
@@ -124,10 +169,8 @@ export const placeOrder = async (req, res) => {
       }
     });
 
-    // Deduct stock immediately after order creation
     await deductStock(orderProducts);
 
-    // Notify Admin
     createNotificationHelper({
       title: "New Order Placed",
       message: `Order ${order.orderId} placed by ${req.user.fullName || 'User'}`,
@@ -136,7 +179,6 @@ export const placeOrder = async (req, res) => {
       referenceId: order._id
     }, req.io);
 
-    // Notify User via Socket
     createNotificationHelper({
       userId: req.user._id,
       title: "Order Placed Successfully",
@@ -145,7 +187,6 @@ export const placeOrder = async (req, res) => {
       referenceId: order._id
     }, req.io);
 
-    // Notify User via Email
     if (req.user.email) {
       sendEmail(
         req.user.email,
@@ -184,8 +225,18 @@ export const verifyPayment = async (req, res) => {
     } = req.body;
 
     const order = await Order.findOne({ orderId: razorpay_order_id });
-    if (!order)
+    if (!order) {
       return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    // Idempotency: if already paid, return success
+    if (order.paymentStatus === "Paid") {
+      return res.json({
+        success: true,
+        message: "Payment already verified",
+        order
+      });
+    }
 
     // Create signature
     const body = razorpay_order_id + "|" + razorpay_payment_id;
@@ -204,13 +255,17 @@ export const verifyPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid payment signature" });
     }
 
-    // Payment is verified
+    // Mark paid and move to processing
     order.paymentStatus = "Paid";
     order.transactionId = razorpay_payment_id;
     order.orderStatus = "processing";
+    if (!order.statusTimestamps) order.statusTimestamps = {};
     order.statusTimestamps.processing = new Date();
 
     await order.save();
+
+    // Deduct stock once (only when moving from Pending -> Paid)
+    await deductStock(order.products);
 
     // Notify Admin
     createNotificationHelper({
@@ -230,14 +285,13 @@ export const verifyPayment = async (req, res) => {
       referenceId: order._id
     }, req.io);
 
-    // Notify User via Email (Fetching user email from order doesn't have it directly if only userId is stored... wait, order has userId, which needs population, OR we use shippingAddress email)
-    // Order model doesn't populate userId here.
-    // However, I can use shippingAddress.email which is stored in Order.
+    // Send confirmation email only once, after successful payment verification.
     if (order.shippingAddress && order.shippingAddress.email) {
+      const emailTotal = order.grandTotal ?? order.totalAmount ?? "";
       sendEmail(
         order.shippingAddress.email,
-        "Payment Received - ELECTRICI TOYS HUB",
-        `<h1>Payment Received!</h1><p>We received your payment for order <b>${order.orderId}</b>.</p>`
+        "Order Confirmation - ELECTRICI TOYS HUB",
+        `<h1>Order Placed!</h1><p>Your order <b>${order.orderId}</b> has been placed successfully.</p><p>Total: ₹${emailTotal}</p><p><b>Payment Status:</b> Paid</p>`
       );
     }
 
@@ -256,7 +310,13 @@ export const verifyPayment = async (req, res) => {
 /* ================= GET ALL ORDERS ================= */
 export const getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find().populate("userId").populate("products.productId").populate("shippingAddressId").sort({ createdAt: -1 });
+    // Hide unpaid online orders from admin list (order appears only after payment is Paid)
+    const orders = await Order.find({
+      $or: [
+        { paymentMethod: "COD" },
+        { paymentStatus: "Paid" }
+      ]
+    }).populate("userId").populate("products.productId").populate("shippingAddressId").sort({ createdAt: -1 });
     res.json({ success: true, total: orders.length, orders });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -293,7 +353,14 @@ export const getOrderById = async (req, res) => {
 /* ================= GET USER ORDERS ================= */
 export const getUserOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.user._id })
+    // Hide unpaid online orders from user list as well (show only after Paid).
+    const orders = await Order.find({
+      userId: req.user._id,
+      $or: [
+        { paymentMethod: "COD" },
+        { paymentStatus: "Paid" }
+      ]
+    })
       .populate("products.productId")
       .populate("shippingAddressId")
       .sort({ createdAt: -1 });

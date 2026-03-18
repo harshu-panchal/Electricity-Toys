@@ -244,12 +244,22 @@ export function Checkout() {
             return;
           }
 
+          const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+          if (!razorpayKey) {
+            toast({
+              title: "PAYMENT CONFIG ERROR",
+              description:
+                "Razorpay key missing. Please set VITE_RAZORPAY_KEY_ID in Frontend/.env and restart the frontend server.",
+              variant: "destructive",
+            });
+            return;
+          }
+
           const options = {
-            key:
-              import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_8sYbzHWidwe5Zw",
-            amount: orderData.grandTotal * 100,
+            key: razorpayKey,
+            amount: Number(orderData.grandTotal || grandTotal) * 100,
             currency: "INR",
-            name: "Electricity Toys",
+            name: "ElectriciToys Hub",
             description: `Order #${orderData.orderId}`,
             image: "/logo.png",
             order_id: orderData.orderId,
