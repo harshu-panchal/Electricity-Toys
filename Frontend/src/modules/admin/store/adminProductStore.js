@@ -38,9 +38,33 @@ export const useAdminProductStore = create(
                     if (response.data.success) {
                         // Refetch to ensure sync
                         await get().fetchCategories();
+                        return { success: true };
                     }
+                    return { success: false, error: response.data.message || 'Failed to add category' };
                 } catch (error) {
-                    set({ error: error.response?.data?.message || error.message, loading: false });
+                    const msg = error.response?.data?.message || error.message || 'Failed to add category';
+                    set({ error: msg, loading: false });
+                    return { success: false, error: msg };
+                } finally {
+                    set({ loading: false });
+                }
+            },
+
+            updateCategory: async (categoryId, formData) => {
+                set({ loading: true, error: null });
+                try {
+                    const response = await api.put(`/category/update/${categoryId}`, formData);
+
+                    if (response.data.success) {
+                        await get().fetchCategories();
+                        return { success: true };
+                    }
+
+                    return { success: false, error: response.data.message || 'Failed to update category' };
+                } catch (error) {
+                    const msg = error.response?.data?.message || error.message || 'Failed to update category';
+                    set({ error: msg, loading: false });
+                    return { success: false, error: msg };
                 } finally {
                     set({ loading: false });
                 }

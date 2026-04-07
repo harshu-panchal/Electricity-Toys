@@ -2,50 +2,100 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdminProductStore } from '../../store/adminProductStore';
 import { Button } from '../../../user/components/ui/button';
-import { Plus, Trash2, Tag, Image as ImageIcon, X, Search, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Tag, Image as ImageIcon, X, Search, Loader2, Edit2 } from 'lucide-react';
 import { optimizeImageUrl, compressImage } from '../../../../lib/utils';
 import { Badge } from '../../../user/components/ui/badge';
 
 export default function CategoryManager() {
-    const { categories, addCategory, deleteCategory, fetchCategories } = useAdminProductStore();
+    const { categories, addCategory, updateCategory, deleteCategory, fetchCategories } = useAdminProductStore();
     const [newCategory, setNewCategory] = useState('');
+    const [description, setDescription] = useState('');
     const [image, setImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
+    const [existingImage, setExistingImage] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAdding, setIsAdding] = useState(false);
+    const [editingCategory, setEditingCategory] = useState(null);
 
     useEffect(() => {
         fetchCategories();
     }, [fetchCategories]);
 
+    const resetForm = () => {
+        if (imagePreview?.startsWith('blob:')) {
+            URL.revokeObjectURL(imagePreview);
+        }
+        setNewCategory('');
+        setDescription('');
+        setImage(null);
+        setImagePreview(null);
+        setExistingImage(null);
+        setEditingCategory(null);
+    };
+
+    const openAddModal = () => {
+        resetForm();
+        setIsModalOpen(true);
+    };
+
+    const openEditModal = (category) => {
+        if (!category?._id) return;
+        resetForm();
+        setEditingCategory(category);
+        setNewCategory(category.categoryName || '');
+        setDescription(category.description || '');
+        setExistingImage(category.image || null);
+        setImage(null);
+        setImagePreview(category.image ? optimizeImageUrl(category.image, 300) : null);
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        resetForm();
+        setIsModalOpen(false);
+    };
+
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            if (imagePreview?.startsWith('blob:')) {
+                URL.revokeObjectURL(imagePreview);
+            }
             setImage(file);
             setImagePreview(URL.createObjectURL(file));
         }
     };
 
-    const handleAdd = async (e) => {
+    const clearSelectedImage = () => {
+        if (imagePreview?.startsWith('blob:')) {
+            URL.revokeObjectURL(imagePreview);
+        }
+        setImage(null);
+        setImagePreview(existingImage ? optimizeImageUrl(existingImage, 300) : null);
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (newCategory.trim()) {
             setIsAdding(true);
             try {
                 const formData = new FormData();
                 formData.append('categoryName', newCategory.trim());
-                formData.append('description', 'Added via Admin Panel');
+                formData.append('description', description.trim() || 'Added via Admin Panel');
                 if (image) {
                     const compressed = await compressImage(image, 1600, 0.8);
                     formData.append('image', compressed || image);
                 }
-                await addCategory(formData);
-                setNewCategory('');
-                setImage(null);
-                setImagePreview(null);
-                setIsModalOpen(false);
+                const result = editingCategory
+                    ? await updateCategory(editingCategory._id, formData)
+                    : await addCategory(formData);
+
+                if (result?.success) {
+                    closeModal();
+                }
             } catch (error) {
-                console.error("Add category failed", error);
+                console.error("Save category failed", error);
             } finally {
                 setIsAdding(false);
             }
@@ -64,7 +114,7 @@ export default function CategoryManager() {
                     <p className="text-xs md:text-sm text-muted-foreground font-medium italic">Manage product categories ({categories.length} total)</p>
                 </div>
                 <Button
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={openAddModal}
                     className="rounded-full font-black italic tracking-widest uppercase px-6 md:px-8 h-10 md:h-12 shadow-lg shadow-primary/20 text-xs md:text-sm"
                 >
                     <Plus className="mr-2 h-4 w-4" />
@@ -110,20 +160,30 @@ export default function CategoryManager() {
                                 </div>
                             </div>
 
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => deleteCategory(category._id)}
-                                className="h-8 w-8 md:h-10 md:w-10 rounded-full text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-100 md:opacity-0 group-hover:opacity-100"
-                            >
-                                <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                            </Button>
+                            <div className="flex items-center gap-1 md:gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => openEditModal(category)}
+                                    className="h-8 w-8 md:h-10 md:w-10 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                                >
+                                    <Edit2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                                </Button>
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => deleteCategory(category._id)}
+                                    className="h-8 w-8 md:h-10 md:w-10 rounded-full text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                                >
+                                    <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                                </Button>
+                            </div>
                         </motion.div>
                     ))}
                 </AnimatePresence>
             </div>
 
-            {/* Add Category Modal */}
+            {/* Add/Edit Category Modal */}
             <AnimatePresence>
                 {isModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
@@ -135,16 +195,18 @@ export default function CategoryManager() {
                         >
                             <div className="p-6 md:p-8 space-y-6">
                                 <div className="flex justify-between items-center">
-                                    <h2 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter">Add Category</h2>
+                                    <h2 className="text-xl md:text-2xl font-black italic uppercase tracking-tighter">
+                                        {editingCategory ? 'Edit Category' : 'Add Category'}
+                                    </h2>
                                     <button
-                                        onClick={() => setIsModalOpen(false)}
+                                        onClick={closeModal}
                                         className="p-2 hover:bg-secondary/10 rounded-full transition-colors"
                                     >
                                         <X className="h-5 w-5 text-muted-foreground" />
                                     </button>
                                 </div>
 
-                                <form onSubmit={handleAdd} className="space-y-6">
+                                <form onSubmit={handleSubmit} className="space-y-6">
                                     <div className="space-y-2">
                                         <label className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground ml-2">Category Name</label>
                                         <div className="relative">
@@ -156,8 +218,19 @@ export default function CategoryManager() {
                                                 onChange={(e) => setNewCategory(e.target.value)}
                                                 placeholder="E.g. Electric Skateboards"
                                                 className="w-full bg-secondary/5 border border-secondary/20 rounded-2xl pl-12 pr-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all font-bold uppercase tracking-wider text-xs md:text-sm"
-                                            />
+                                                />
                                         </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-muted-foreground ml-2">Description</label>
+                                        <textarea
+                                            value={description}
+                                            onChange={(e) => setDescription(e.target.value)}
+                                            placeholder="Short category description"
+                                            rows="3"
+                                            className="w-full bg-secondary/5 border border-secondary/20 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all font-medium text-xs md:text-sm resize-none"
+                                        />
                                     </div>
 
                                     <div className="space-y-2">
@@ -177,7 +250,7 @@ export default function CategoryManager() {
                                                 >
                                                     <ImageIcon className="h-4 w-4 text-muted-foreground" />
                                                     <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">
-                                                        {image ? 'Change' : 'Upload Image'}
+                                                        {image ? 'Change' : editingCategory && existingImage ? 'Replace Image' : 'Upload Image'}
                                                     </span>
                                                 </label>
                                             </div>
@@ -185,16 +258,23 @@ export default function CategoryManager() {
                                             {imagePreview && (
                                                 <div className="relative h-12 w-12 rounded-xl overflow-hidden border border-secondary/20 shadow-sm flex-shrink-0">
                                                     <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => { setImage(null); setImagePreview(null); }}
-                                                        className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    >
-                                                        <X className="h-4 w-4 text-white" />
-                                                    </button>
+                                                    {image && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={clearSelectedImage}
+                                                            className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <X className="h-4 w-4 text-white" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
+                                        {editingCategory && existingImage && !image && (
+                                            <p className="text-[10px] md:text-xs text-muted-foreground ml-2">
+                                                Current image will stay unless you upload a new one.
+                                            </p>
+                                        )}
                                     </div>
 
                                     <Button
@@ -205,12 +285,12 @@ export default function CategoryManager() {
                                         {isAdding ? (
                                             <>
                                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Adding...
+                                                {editingCategory ? 'Updating...' : 'Adding...'}
                                             </>
                                         ) : (
                                             <>
                                                 <Plus className="mr-2 h-4 w-4" />
-                                                Add Category
+                                                {editingCategory ? 'Update Category' : 'Add Category'}
                                             </>
                                         )}
                                     </Button>
