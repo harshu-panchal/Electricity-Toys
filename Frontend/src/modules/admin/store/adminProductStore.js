@@ -33,9 +33,7 @@ export const useAdminProductStore = create(
             addCategory: async (formData) => {
                 set({ loading: true, error: null });
                 try {
-                    const response = await api.post('/category/create', formData, {
-                        headers: { 'Content-Type': 'multipart/form-data' }
-                    });
+                    const response = await api.post('/category/create', formData);
 
                     if (response.data.success) {
                         // Refetch to ensure sync
@@ -110,8 +108,7 @@ export const useAdminProductStore = create(
                     // OR standard JSON if no files.
 
                     // Backend: /products (POST)
-                    const headers = productData instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {};
-                    const response = await api.post('/product', productData, { headers });
+                    const response = await api.post('/product', productData);
 
                     if (response.data.success) {
                         await get().fetchProducts(); // Refresh list
@@ -131,8 +128,7 @@ export const useAdminProductStore = create(
                 set({ loading: true, error: null });
                 try {
                     // Backend: /products/:id (PUT)
-                    const headers = updates instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {};
-                    const response = await api.put(`/product/${id}`, updates, { headers });
+                    const response = await api.put(`/product/${id}`, updates);
 
                     if (response.data.success) {
                         await get().fetchProducts();

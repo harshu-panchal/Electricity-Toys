@@ -384,9 +384,7 @@ export const useContentStore = create(
         try {
           const formData = new FormData();
           formData.append("image", file);
-          const response = await api.post("/content/upload/image", formData, {
-            headers: { "Content-Type": "multipart/form-data" },
-          });
+          const response = await api.post("/content/upload/image", formData);
           if (response.data.success) {
             return { success: true, url: response.data.url };
           }

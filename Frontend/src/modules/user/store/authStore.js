@@ -79,8 +79,13 @@ export const useAuthStore = create(
                 try {
                     const response = await api.put('/auth/update-profile', updates);
                     if (response.data.success) {
+                        const nextToken = response.data.token;
                         set((state) => ({
-                            user: { ...state.user, ...response.data.data }
+                            user: {
+                                ...state.user,
+                                ...response.data.data,
+                                ...(nextToken ? { token: nextToken } : {})
+                            }
                         }));
                         return { success: true };
                     }
@@ -97,12 +102,15 @@ export const useAuthStore = create(
                 try {
                     const form = new FormData();
                     form.append('avatar', file);
-                    const response = await api.put('/auth/update-avatar', form, {
-                        headers: { 'Content-Type': 'multipart/form-data' }
-                    });
+                    const response = await api.put('/auth/update-avatar', form);
                     if (response.data.success) {
+                        const nextToken = response.data.token;
                         set((state) => ({
-                            user: { ...state.user, ...response.data.data }
+                            user: {
+                                ...state.user,
+                                ...response.data.data,
+                                ...(nextToken ? { token: nextToken } : {})
+                            }
                         }));
                         return { success: true, url: response.data.data?.avatar };
                     }
