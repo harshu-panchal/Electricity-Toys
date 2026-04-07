@@ -12,6 +12,13 @@ const api = axios.create({
 api.interceptors.request.use(
     (config) => {
         let token = null;
+        const isFormData =
+            typeof FormData !== 'undefined' && config.data instanceof FormData;
+
+        if (isFormData && config.headers) {
+            delete config.headers['Content-Type'];
+            delete config.headers['content-type'];
+        }
 
         // Helper to extract token from storage
         const getTokenFromStorage = (storageName, keyPath = ['user', 'token']) => {

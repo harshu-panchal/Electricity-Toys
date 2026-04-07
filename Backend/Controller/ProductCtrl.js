@@ -6,6 +6,9 @@ import { uploadToCloudinary } from "../Cloudinary/CloudinaryHelper.js";
 /* ================= CREATE PRODUCT ================= */
 export const createProduct = async (req, res) => {
   try {
+    console.log("[createProduct] req.files:", req.files?.length || 0);
+    console.log("[createProduct] req.body.images:", req.body.images);
+
     const existingProduct = await Product.findOne({
       $or: [
         { productName: req.body.productName },
@@ -23,8 +26,17 @@ export const createProduct = async (req, res) => {
     let allImageUrls = [];
     if (req.files && req.files.length > 0) {
       for (let file of req.files) {
-        const result = await uploadToCloudinary(file.buffer, "products");
-        allImageUrls.push(result.url);
+        try {
+          const result = await uploadToCloudinary(file.buffer, "products");
+          console.log("[createProduct] Cloudinary upload result:", result);
+          allImageUrls.push(result.url);
+        } catch (uploadError) {
+          console.error("[createProduct] Cloudinary upload failed:", uploadError);
+          return res.status(500).json({
+            success: false,
+            message: "Image upload failed",
+          });
+        }
       }
     }
 
@@ -220,12 +232,24 @@ export const getProductById = async (req, res) => {
 /* ================= UPDATE PRODUCT ================= */
 export const updateProduct = async (req, res) => {
   try {
+    console.log("[updateProduct] req.files:", req.files?.length || 0);
+    console.log("[updateProduct] req.body.images:", req.body.images);
+
     let newImages = [];
 
     if (req.files && req.files.length > 0) {
       for (let file of req.files) {
-        const result = await uploadToCloudinary(file.buffer, "products");
-        newImages.push(result.url);
+        try {
+          const result = await uploadToCloudinary(file.buffer, "products");
+          console.log("[updateProduct] Cloudinary upload result:", result);
+          newImages.push(result.url);
+        } catch (uploadError) {
+          console.error("[updateProduct] Cloudinary upload failed:", uploadError);
+          return res.status(500).json({
+            success: false,
+            message: "Image upload failed",
+          });
+        }
       }
     }
 
@@ -314,8 +338,14 @@ export const updateProduct = async (req, res) => {
       }).filter(item => item !== null);
 
       product.variants = updatedVariants;
+      product.images = updatedVariants.flatMap((variant) =>
+        Array.isArray(variant.images) ? variant.images : []
+      );
       delete req.body.variants;
     }
+
+    // Prevent a malformed multipart field from overwriting the real image array
+    delete req.body.images;
 
     // update other fields
     Object.assign(product, req.body);

@@ -46,7 +46,7 @@ export default function ProductForm() {
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
-  const [variants, setVariants] = useState([]); // [{ color: '', file: null, previewUrl: '', existingImage: '' }]
+  const [variants, setVariants] = useState([]); // [{ color: '', images: [{ type, url?, file?, previewUrl? }] }]
 
   // Searchable Category State
   const [categorySearch, setCategorySearch] = useState("");
@@ -127,9 +127,11 @@ export default function ProductForm() {
           setVariants(
             product.variants.map((v) => ({
               color: v.color,
-              file: null,
-              previewUrl: "",
-              existingImage: v.images && v.images.length > 0 ? v.images[0] : "",
+              images: (v.images || []).map((url) => ({
+                id: `${url}-${Math.random().toString(36).slice(2, 8)}`,
+                type: "existing",
+                url,
+              })),
             })),
           );
         }
@@ -180,30 +182,72 @@ export default function ProductForm() {
   const addVariant = () => {
     setVariants([
       ...variants,
-      { color: "", file: null, previewUrl: "", existingImage: "" },
+      { color: "", images: [] },
     ]);
   };
 
   const removeVariant = (index) => {
-    setVariants(variants.filter((_, i) => i !== index));
+    setVariants((prev) => {
+      const next = [...prev];
+      const removed = next[index];
+      if (removed?.images?.length) {
+        removed.images.forEach((image) => {
+          if (image.type === "new" && image.previewUrl) {
+            URL.revokeObjectURL(image.previewUrl);
+          }
+        });
+      }
+      return next.filter((_, i) => i !== index);
+    });
   };
 
   const handleVariantColorChange = (index, val) => {
-    const newV = [...variants];
-    newV[index].color = val;
-    setVariants(newV);
+    setVariants((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], color: val };
+      return next;
+    });
   };
 
   const handleVariantFileChange = (index, e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const newV = [...variants];
-      newV[index].file = file;
-      newV[index].previewUrl = URL.createObjectURL(file);
-      // reset existing if new one added
-      // newV[index].existingImage = '';
-      setVariants(newV);
-    }
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const nextImages = files.map((file) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      type: "new",
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }));
+
+    setVariants((prev) => {
+      const next = [...prev];
+      const current = next[index] || { color: "", images: [] };
+      next[index] = {
+        ...current,
+        images: [...(current.images || []), ...nextImages],
+      };
+      return next;
+    });
+
+    e.target.value = "";
+  };
+
+  const removeVariantImage = (variantIndex, imageIndex) => {
+    setVariants((prev) => {
+      const next = [...prev];
+      const current = next[variantIndex];
+      if (!current) return prev;
+
+      const images = [...(current.images || [])];
+      const [removed] = images.splice(imageIndex, 1);
+      if (removed?.type === "new" && removed.previewUrl) {
+        URL.revokeObjectURL(removed.previewUrl);
+      }
+
+      next[variantIndex] = { ...current, images };
+      return next;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -254,21 +298,26 @@ export default function ProductForm() {
       }
 
       // Variants Handling
-      // We enforce 1 image per variant in this simplified form.
-
-      const textVariants = variants.map((v) => ({
-        color: v.color,
-        images: v.existingImage ? [v.existingImage] : [],
-        imageCount: v.file ? 1 : 0,
-      }));
+      const textVariants = variants.map((v) => {
+        const images = v.images || [];
+        return {
+          color: v.color,
+          images: images
+            .filter((img) => img.type === "existing" && img.url)
+            .map((img) => img.url),
+          imageCount: images.filter((img) => img.type === "new" && img.file)
+            .length,
+        };
+      });
 
       data.append("variants", JSON.stringify(textVariants));
 
-      // Append variant files (compressed)
-      for (const v of variants) {
-        if (v.file) {
-          const compressed = await compressImage(v.file, 1600, 0.8);
-          data.append("images", compressed || v.file);
+      // Append variant files (compressed) in the same order as the variants payload
+      for (const variant of variants) {
+        for (const image of variant.images || []) {
+          if (image.type !== "new" || !image.file) continue;
+          const compressed = await compressImage(image.file, 1600, 0.8);
+          data.append("images", compressed || image.file);
         }
       }
 
@@ -521,7 +570,7 @@ export default function ProductForm() {
 
         {/* Sidebar Info */}
         <div className="space-y-6 md:space-y-8">
-          {/* Color Variants: Simplified One-Color-One-Image */}
+          {/* Color Variants: multiple images per color */}
           <div className="bg-secondary/10 p-5 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border border-secondary/20 space-y-4 md:space-y-6">
             <div className="flex justify-between items-center ml-2">
               <Label className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em]">
@@ -541,65 +590,111 @@ export default function ProductForm() {
               {variants.map((v, index) => (
                 <div
                   key={index}
-                  className="bg-background/40 p-3 md:p-4 rounded-xl border border-secondary/20 flex flex-col md:flex-row gap-4 items-center animate-in fade-in slide-in-from-bottom-2">
-                  <input
-                    type="text"
-                    placeholder="Color Name (e.g. Red)"
-                    value={v.color}
-                    onChange={(e) =>
-                      handleVariantColorChange(index, e.target.value)
-                    }
-                    className="flex-1 min-w-[150px] md:min-w-[200px] h-10 rounded-xl border border-input bg-white text-black px-4 py-2 text-sm font-bold shadow-sm ring-offset-background placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  />
+                  className="bg-background/40 p-3 md:p-4 rounded-xl border border-secondary/20 space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                  <div className="flex flex-col md:flex-row gap-4 md:items-center">
+                    <input
+                      type="text"
+                      placeholder="Color Name (e.g. Red)"
+                      value={v.color}
+                      onChange={(e) =>
+                        handleVariantColorChange(index, e.target.value)
+                      }
+                      className="flex-1 min-w-[150px] md:min-w-[200px] h-10 rounded-xl border border-input bg-white text-black px-4 py-2 text-sm font-bold shadow-sm ring-offset-background placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
 
-                  {/* Image Upload/Preview */}
-                  <div className="flex-shrink-0 relative group h-12 w-12 md:h-14 md:w-14">
-                    {v.previewUrl || v.existingImage ? (
-                      <div
-                        className="w-full h-full rounded-lg overflow-hidden border border-secondary/20 cursor-pointer relative"
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest"
                         onClick={() =>
                           document
                             .getElementById(`variant-file-${index}`)
-                            .click()
-                        }>
-                        <img
-                          src={v.previewUrl || v.existingImage}
-                          className="w-full h-full object-cover"
-                          alt="Variant"
-                        />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <ImageIcon className="h-4 w-4 text-white" />
-                        </div>
+                            ?.click()
+                        }
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add Images
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-500 rounded-full h-8 w-8 hover:bg-red-50"
+                        onClick={() => removeVariant(index)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <input
+                    id={`variant-file-${index}`}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => handleVariantFileChange(index, e)}
+                    className="hidden"
+                  />
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                        Variant Images
+                      </span>
+                      <span className="text-[9px] text-muted-foreground">
+                        {v.images?.length || 0} image(s)
+                      </span>
+                    </div>
+
+                    {v.images && v.images.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {v.images.map((image, imageIndex) => {
+                          const src =
+                            image.type === "new"
+                              ? image.previewUrl
+                              : image.url;
+
+                          return (
+                            <div
+                              key={image.id || `${index}-${imageIndex}`}
+                              className="relative aspect-square rounded-xl overflow-hidden border border-secondary/20 bg-white"
+                            >
+                              <img
+                                src={src}
+                                alt={`Variant ${v.color || "image"}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-black"
+                                onClick={() =>
+                                  removeVariantImage(index, imageIndex)
+                                }
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : (
                       <div
-                        className="w-full h-full rounded-lg border border-dashed border-secondary/40 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 bg-background/50 transition-colors"
+                        className="rounded-xl border border-dashed border-secondary/40 bg-background/50 px-4 py-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
                         onClick={() =>
                           document
                             .getElementById(`variant-file-${index}`)
-                            .click()
-                        }>
-                        <Plus className="h-4 w-4 text-muted-foreground mb-1" />
-                        <span className="text-[7px] font-black uppercase tracking-tighter text-muted-foreground">Upload Image</span>
+                            ?.click()
+                        }
+                      >
+                        <ImageIcon className="h-5 w-5 mx-auto mb-2 text-muted-foreground" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                          Upload one or more images
+                        </span>
                       </div>
                     )}
-                    <input
-                      id={`variant-file-${index}`}
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleVariantFileChange(index, e)}
-                      className="hidden"
-                    />
                   </div>
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="text-red-500 rounded-full h-8 w-8 hover:bg-red-50"
-                    onClick={() => removeVariant(index)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
                 </div>
               ))}
               {variants.length === 0 && (
