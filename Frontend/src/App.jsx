@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Outlet, Navigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 
 // Layouts
 import { UserLayout } from './modules/user/layout/UserLayout';
@@ -158,6 +159,20 @@ const GlobalSocketListener = () => {
     return null;
 };
 
+const GoogleAnalytics = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (window.gtag) {
+      window.gtag('config', 'AW-17762925161', {
+        page_path: location.pathname + location.search,
+      });
+    }
+  }, [location]);
+
+  return null;
+};
+
 function App() {
   
 
@@ -165,6 +180,7 @@ function App() {
     <ToastManager>
         <GlobalSocketListener />
       <Router>
+        <GoogleAnalytics />
         <ScrollToTop />
         <Routes>
           {/* Admin Auth Routes */}
