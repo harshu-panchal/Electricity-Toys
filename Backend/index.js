@@ -57,6 +57,9 @@ io.on("connection", (socket) => {
   });
 });
 
+// ✅ Serve static files
+app.use(express.static("public"));
+
 // ✅ API routes
 app.use("/", routes);
 

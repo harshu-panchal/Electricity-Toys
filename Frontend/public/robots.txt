@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://electricityoshub.com/sitemap.xml
