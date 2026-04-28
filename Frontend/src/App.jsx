@@ -33,31 +33,31 @@ import { ToastManager, useToast } from './modules/user/components/Toast';
 import ScrollToTop from './components/ScrollToTop';
 
 // Module: Admin Pages
-import AdminDashboard from './modules/admin/pages/AdminDashboard';
-import ProductList from './modules/admin/pages/Products/ProductList';
-import ProductForm from './modules/admin/pages/Products/ProductForm';
-import CategoryManager from './modules/admin/pages/Products/CategoryManager';
-import OrderList from './modules/admin/pages/Orders/OrderList';
-import OrderDetail from './modules/admin/pages/Orders/OrderDetail';
-import ShippingSettings from './modules/admin/pages/ShippingSettings';
-import Analytics from './modules/admin/pages/Analytics';
-import Finance from './modules/admin/pages/Finance';
-import Profile from './modules/admin/pages/Profile';
-import Notifications from './modules/admin/pages/Notifications';
-import AdminLogin from './modules/admin/pages/Auth/AdminLogin';
-import AdminForgotPassword from './modules/admin/pages/Auth/AdminForgotPassword';
-import AdminVerifyResetOtp from './modules/admin/pages/Auth/AdminVerifyResetOtp';
-import AdminResetPassword from './modules/admin/pages/Auth/AdminResetPassword';
+const AdminDashboard = React.lazy(() => import('./modules/admin/pages/AdminDashboard'));
+const ProductList = React.lazy(() => import('./modules/admin/pages/Products/ProductList'));
+const ProductForm = React.lazy(() => import('./modules/admin/pages/Products/ProductForm'));
+const CategoryManager = React.lazy(() => import('./modules/admin/pages/Products/CategoryManager'));
+const OrderList = React.lazy(() => import('./modules/admin/pages/Orders/OrderList'));
+const OrderDetail = React.lazy(() => import('./modules/admin/pages/Orders/OrderDetail'));
+const ShippingSettings = React.lazy(() => import('./modules/admin/pages/ShippingSettings'));
+const Analytics = React.lazy(() => import('./modules/admin/pages/Analytics'));
+const Finance = React.lazy(() => import('./modules/admin/pages/Finance'));
+const Profile = React.lazy(() => import('./modules/admin/pages/Profile'));
+const Notifications = React.lazy(() => import('./modules/admin/pages/Notifications'));
+const AdminLogin = React.lazy(() => import('./modules/admin/pages/Auth/AdminLogin'));
+const AdminForgotPassword = React.lazy(() => import('./modules/admin/pages/Auth/AdminForgotPassword'));
+const AdminVerifyResetOtp = React.lazy(() => import('./modules/admin/pages/Auth/AdminVerifyResetOtp'));
+const AdminResetPassword = React.lazy(() => import('./modules/admin/pages/Auth/AdminResetPassword'));
 
-import UserList from './modules/admin/pages/Users/UserList';
-import UserDetail from './modules/admin/pages/Users/UserDetail';
+const UserList = React.lazy(() => import('./modules/admin/pages/Users/UserList'));
+const UserDetail = React.lazy(() => import('./modules/admin/pages/Users/UserDetail'));
 // Content Management
-import { HomeContent } from './modules/admin/pages/Content/HomeContent';
-import { AboutContent } from './modules/admin/pages/Content/AboutContent';
+const HomeContent = React.lazy(() => import('./modules/admin/pages/Content/HomeContent').then(module => ({ default: module.HomeContent })));
+const AboutContent = React.lazy(() => import('./modules/admin/pages/Content/AboutContent').then(module => ({ default: module.AboutContent })));
 
-import { ContactContent } from './modules/admin/pages/Content/ContactContent';
-import { ExperienceContent } from './modules/admin/pages/Content/ExperienceContent';
-import LegalPagesManager from './modules/admin/pages/Content/LegalPagesManager';
+const ContactContent = React.lazy(() => import('./modules/admin/pages/Content/ContactContent').then(module => ({ default: module.ContactContent })));
+const ExperienceContent = React.lazy(() => import('./modules/admin/pages/Content/ExperienceContent').then(module => ({ default: module.ExperienceContent })));
+const LegalPagesManager = React.lazy(() => import('./modules/admin/pages/Content/LegalPagesManager'));
 
 // Placeholder for missing components
 const Placeholder = ({ title, emoji = '🚧' }) => (
@@ -182,6 +182,11 @@ function App() {
       <Router>
         <GoogleAnalytics />
         <ScrollToTop />
+        <React.Suspense fallback={
+          <div className="flex h-screen items-center justify-center">
+            <p className="text-lg font-semibold">Loading...</p>
+          </div>
+        }>
         <Routes>
           {/* Admin Auth Routes */}
           <Route path="/admin/login" element={<PublicAdminRoute><AdminLogin /></PublicAdminRoute>} />
@@ -293,6 +298,7 @@ function App() {
             <Route path="*" element={<Placeholder title="404 - Not Found" emoji="😵" />} />
           </Route>
         </Routes>
+        </React.Suspense>
       </Router>
     </ToastManager>
   );
