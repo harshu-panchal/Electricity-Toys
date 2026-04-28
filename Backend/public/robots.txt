@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
-Sitemap: https://electricityoshub.com/sitemap.xml
+
+Sitemap: https://electricitoyshub.com/sitemap.xml
