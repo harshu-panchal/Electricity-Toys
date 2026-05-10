@@ -19,7 +19,6 @@ export const getDashboard = async (req, res) => {
     // Active Products
     const activeProducts = await ProductModel.countDocuments({
       isActive: true,
-      isPublished: true,
       isDeleted: false
     });
 
